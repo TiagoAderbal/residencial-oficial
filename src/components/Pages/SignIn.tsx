@@ -36,7 +36,7 @@ export const SignInPage = () => {
   const form = useForm<SignInData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: "",
+      identifier: "",
       password: "",
     },
   });
@@ -65,7 +65,7 @@ export const SignInPage = () => {
         <CardHeader>
           <CardTitle>Faça Login</CardTitle>
           <CardDescription>
-            Insira seu email e senha para acessar sua conta.
+            Insira seu email ou usuário para acessar sua conta.
           </CardDescription>
         </CardHeader>
 
@@ -83,13 +83,13 @@ export const SignInPage = () => {
                   <>
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="identifier"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Email ou Usuário</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Ex: joao2000@gmail.com"
+                              placeholder="Digite seu email ou usuário"
                               {...field}
                             />
                           </FormControl>
