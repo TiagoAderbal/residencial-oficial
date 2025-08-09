@@ -39,7 +39,7 @@ export const handleSignUp = async (data: SignUpData) => {
 export const handleGetUser = async () => {
     const authCookie = cookies().get(process.env.NEXT_PUBLIC_AUTH_KEY as string)?.value
 
-    const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + '/api/v1/authentication/me', {
+    const response = await fetch(process.env.NEXT_PUBLIC_API_BASE_URL + '/api/v1/accounts/me', {
         headers: {
             Authorization: `Bearer ${authCookie}`
         }
