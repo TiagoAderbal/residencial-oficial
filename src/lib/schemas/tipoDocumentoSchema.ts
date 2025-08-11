@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 
-export const tipoContaSchema = z.object({
+export const tipoDocumentoSchema = z.object({
   name: z.string()
     .min(1, { message: "Nome obrigatório" })
     .max(50, { message: "Nome muito longo (máx. 50 caracteres)" }),
@@ -13,4 +13,4 @@ export const tipoContaSchema = z.object({
     .optional(),
 });
 
-export type TipoContaFormValues = z.infer<typeof tipoContaSchema>;
+export type TipoDocumentoFormValues = z.infer<typeof tipoDocumentoSchema>;

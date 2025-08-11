@@ -58,30 +58,37 @@ export const fornecedorSchema = z.object({
     }, { message: "CPF (11 dígitos) ou CNPJ (14 dígitos) inválido" }),
 
   description: z.string()
+    .min(1, { message: "Descrição obrigatória" })
     .max(500, { message: "Descrição muito longa (máx. 500 caracteres)" })
     .optional(),
 
   address: z.string()
+    .min(1, { message: "Endereço obrigatório" })
     .max(200, { message: "Endereço muito longo (máx. 200 caracteres)" })
     .optional(),
 
   number: z.string()
+    .min(1, { message: "Número obrigatório" })
     .max(20, { message: "Número muito longo (máx. 20 caracteres)" })
     .optional(),
 
   city: z.string()
+    .min(1, { message: "Cidade obrigatória" })
     .max(100, { message: "Cidade muito longa (máx. 100 caracteres)" })
     .optional(),
 
   state: z.string()
+    .min(1, { message: "Estado obrigatório" })
     .length(2, { message: "Selecione um estado válido" })
     .optional(),
 
   country: z.string()
+    .min(1, { message: "País obrigatório" })
     .max(100, { message: "País muito longo (máx. 100 caracteres)" })
     .optional(),
 
   phone: z.string()
+    .min(1, { message: "Telefone obrigatório" })
     .transform(formatPhone)
     .refine((value) => {
       if (!value) return true;
@@ -91,6 +98,7 @@ export const fornecedorSchema = z.object({
     .optional(),
 
   mobile: z.string()
+    .min(1, { message: "Celular obrigatório" })
     .transform(formatPhone)
     .refine((value) => {
       if (!value) return true;

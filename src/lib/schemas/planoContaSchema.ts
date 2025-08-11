@@ -21,6 +21,7 @@ export const planoContaSchema = z.object({
     .max(50, { message: "Nome muito longo (máx. 50 caracteres)" }),
 
   description: z.string()
+    .min(1, { message: "Descrição obrigatória" })
     .max(50, { message: "Descrição muito longa (máx. 50 caracteres)" })
     .optional(),
 
