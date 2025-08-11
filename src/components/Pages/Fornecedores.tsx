@@ -1,7 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { Loader2, Plus, Edit, Trash2, Eye } from "lucide-react";
+import {
+  getFornecedores,
+  createFornecedor,
+  updateFornecedor,
+  deleteFornecedor
+} from "@/lib/requests";
+import { estadosBrasileiros } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,16 +18,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { toast } from "sonner";
-import { Loader2, Plus, Edit, Trash2, Save } from "lucide-react";
-import { estadosBrasileiros } from "@/lib/constants";
+import { Input } from "@/components/ui/input";
+import { FornecedorForm } from "@/components/forms/fornecedor-form";
 import {
-  getFornecedores,
-  createFornecedor,
-  updateFornecedor,
-  deleteFornecedor
-} from "@/lib/requests";
-import { MaskedInput } from "@/components/ui/masked-input";
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerClose,
+} from "@/components/ui/drawer";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type Fornecedor = {
   id: number;
@@ -36,27 +55,16 @@ type Fornecedor = {
 };
 
 export const FornecedoresPage = () => {
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState<Partial<Fornecedor>>({});
-  const [documentMask, setDocumentMask] = useState("999.999.999-99");
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [countries, setCountries] = useState<any[]>([]);
-
-  // Form state
-  const [form, setForm] = useState({
-    name: "",
-    taxId: "",
-    description: "",
-    address: "",
-    number: "",
-    city: "",
-    state: "",
-    country: "",
-    phone: "",
-    mobile: "",
-  });
+  const [openDrawer, setOpenDrawer] = useState(false);
+  const [currentFornecedor, setCurrentFornecedor] = useState<Fornecedor | null>(null);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [fornecedorToDelete, setFornecedorToDelete] = useState<number | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [openViewDrawer, setOpenViewDrawer] = useState(false);
+  const [fornecedorToView, setFornecedorToView] = useState<Fornecedor | null>(null);
 
   // Fetch fornecedores
   useEffect(() => {
@@ -96,87 +104,61 @@ export const FornecedoresPage = () => {
     fetchCountries();
   }, []);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-
-    if (name === "taxId") {
-      const numericValue = value.replace(/\D/g, "");
-      setDocumentMask(
-        numericValue.slice(9, 11) === "00"
-          ? "99.999.999/9999-99"
-          : "999.999.999-99"
-      );
-    }
-
-    setForm((prev) => ({ ...prev, [name]: value }));
+  const handleOpenCreate = () => {
+    setCurrentFornecedor(null);
+    setOpenDrawer(true);
   };
 
-  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+  const handleOpenEdit = (fornecedor: Fornecedor) => {
+    setCurrentFornecedor(fornecedor);
+    setOpenDrawer(true);
   };
 
-  const handleEdit = (fornecedor: Fornecedor) => {
-    if (editingId === fornecedor.id) {
-      handleSave(fornecedor.id);
-    } else {
-      setEditingId(fornecedor.id);
-      setEditForm(fornecedor);
-    }
-  };
-
-  const handleSave = async (id: number) => {
+  const handleSubmit = async (values: any) => {
+    setIsSubmitting(true);
     try {
-      const response = await updateFornecedor(id, editForm);
-      if (response.data) {
-        setFornecedores(fornecedores.map(f =>
-          f.id === id ? { ...f, ...response.data } : f
-        ));
-        toast.success("Fornecedor atualizado com sucesso!");
-        setEditingId(null);
+      if (currentFornecedor) {
+        // Edição
+        const response = await updateFornecedor(currentFornecedor.id, values);
+        if (response.data) {
+          setFornecedores(fornecedores.map(f =>
+            f.id === currentFornecedor.id ? { ...f, ...response.data } : f
+          ));
+          toast.success("Fornecedor atualizado com sucesso!");
+        }
+      } else {
+        // Criação
+        const { data: response } = await createFornecedor(values);
+        if (response) {
+          setFornecedores([...fornecedores, response]);
+          toast.success("Fornecedor cadastrado com sucesso!");
+        }
       }
+      setOpenDrawer(false);
     } catch (error) {
-      toast.error("Erro ao atualizar fornecedor");
+      toast.error(`Erro ao ${currentFornecedor ? "atualizar" : "cadastrar"} fornecedor`);
+    } finally {
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleOpenView = (fornecedor: Fornecedor) => {
+    setFornecedorToView(fornecedor);
+    setOpenViewDrawer(true);
+  };
+
+  const handleDelete = async () => {
+    if (!fornecedorToDelete) return;
+
     try {
-      const { data: response } = await createFornecedor(form);
-      if (response) {
-        setFornecedores([...fornecedores, response]);
-      }
-      toast.success("Fornecedor cadastrado com sucesso!");
-      setIsCreating(false);
-      setForm({
-        name: "",
-        taxId: "",
-        description: "",
-        address: "",
-        number: "",
-        city: "",
-        state: "",
-        country: "",
-        phone: "",
-        mobile: "",
-      });
+      await deleteFornecedor(fornecedorToDelete);
+      setFornecedores(fornecedores.filter(f => f.id !== fornecedorToDelete));
+      toast.success("Fornecedor excluído com sucesso!");
+      setOpenDeleteDialog(false);
     } catch (error) {
-      toast.error("Erro ao cadastrar fornecedor");
+      toast.error("Erro ao excluir fornecedor");
     }
-  }
-
-  const handleDelete = async (id: number) => {
-    if (confirm("Tem certeza que deseja excluir este fornecedor?")) {
-      try {
-        await deleteFornecedor(id);
-        setFornecedores(fornecedores.filter(f => f.id !== id));
-        toast.success("Fornecedor excluído com sucesso!");
-      } catch (error) {
-        toast.error("Erro ao excluir fornecedor");
-      }
-    }
-  }
+  };
 
   return (
     <main className="h-app p-6 overflow-auto">
@@ -185,164 +167,17 @@ export const FornecedoresPage = () => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Fornecedores</CardTitle>
+              <CardDescription>
+                Gerencie seus fornecedores cadastrados
+              </CardDescription>
             </div>
-            <Button onClick={() => setIsCreating(!isCreating)}>
+            <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
               Novo Fornecedor
             </Button>
           </div>
         </CardHeader>
         <CardContent>
-          {isCreating && (
-            <Card className="mb-6">
-              <CardContent className="pt-6">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Nome
-                      </label>
-                      <Input
-                        name="name"
-                        value={form.name}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Documento
-                      </label>
-                      <Input
-                        name="taxId"
-                        value={form.taxId}
-                        onChange={handleInputChange}
-                        required
-                        placeholder={documentMask === "999.999.999-99" ? "000.000.000-00" : "00.000.000/0000-00"}
-                        className="w-full"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Descrição
-                      </label>
-                      <Input
-                        name="description"
-                        value={form.description}
-                        onChange={handleInputChange}
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Endereço
-                      </label>
-                      <Input
-                        name="address"
-                        value={form.address}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Número
-                      </label>
-                      <Input
-                        name="number"
-                        value={form.number}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Cidade
-                      </label>
-                      <Input
-                        name="city"
-                        value={form.city}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Estado
-                      </label>
-                      <select
-                        className="w-full p-2 border rounded"
-                        name="state"
-                        value={form.state}
-                        onChange={(e) => setForm({ ...form, state: e.target.value })}
-                      >
-                        <option value="">Selecione</option>
-                        {estadosBrasileiros.map((estado) => (
-                          <option key={estado.sigla} value={estado.sigla}>
-                            {estado.nome}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        País
-                      </label>
-                      <select
-                        className="w-full p-2 border rounded"
-                        name="country"
-                        value={form.country}
-                        onChange={(e) => setForm({ ...form, country: e.target.value })}
-                      >
-                        <option value="">Selecione</option>
-                        {countries.map((country) => (
-                          <option key={country.code} value={country.name}>
-                            {country.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Telefone
-                      </label>
-                      <Input
-                        name="phone"
-                        value={form.phone}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">
-                        Celular
-                      </label>
-                      <Input
-                        name="mobile"
-                        value={form.mobile}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsCreating(false)}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button type="submit">
-                      Cadastrar
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
-
           {isLoading ? (
             <div className="flex justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -350,7 +185,6 @@ export const FornecedoresPage = () => {
           ) : (
             <div className="border rounded-lg overflow-hidden">
               <div className="grid grid-cols-10 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
-                <div>ID</div>
                 <div>Nome</div>
                 <div>Documento</div>
                 <div>Descrição</div>
@@ -359,148 +193,42 @@ export const FornecedoresPage = () => {
                 <div>País</div>
                 <div>Telefone</div>
                 <div>Celular</div>
+                <div>Identificador</div>
                 <div>Ações</div>
               </div>
               {fornecedores.map((fornecedor) => (
                 <div key={fornecedor.id} className="grid grid-cols-10 p-4 border-t items-center text-sm">
-                  <div>{fornecedor.id}</div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <Input
-                        name="name"
-                        value={editForm.name || ""}
-                        onChange={handleEditChange}
-                      />
-                    ) : (
-                      fornecedor.name
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <Input
-                        name="taxId"
-                        value={editForm.taxId || ""}
-                        onChange={handleEditChange}
-                      />
-                    ) : (
-                      fornecedor.taxId
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <Input
-                        name="description"
-                        value={editForm.description || ""}
-                        onChange={handleEditChange}
-                      />
-                    ) : (
-                      fornecedor.description
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <div className="flex gap-2">
-                        <Input
-                          name="address"
-                          value={editForm.address || ""}
-                          onChange={handleEditChange}
-                          className="flex-1"
-                        />
-                        <Input
-                          name="number"
-                          value={editForm.number || ""}
-                          onChange={handleEditChange}
-                          className="w-20"
-                        />
-                      </div>
-                    ) : (
-                      `${fornecedor.address} - ${fornecedor.number}`
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <div className="flex gap-2">
-                        <Input
-                          name="city"
-                          value={editForm.city || ""}
-                          onChange={handleEditChange}
-                          className="flex-1"
-                        />
-                        <select
-                          className="w-24 p-2 border rounded"
-                          name="state"
-                          value={editForm.state || ""}
-                          onChange={(e) => setEditForm({ ...editForm, state: e.target.value })}
-                        >
-                          <option value="">UF</option>
-                          {estadosBrasileiros.map((estado) => (
-                            <option key={estado.sigla} value={estado.sigla}>
-                              {estado.sigla}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    ) : (
-                      `${fornecedor.city}/${fornecedor.state}`
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <select
-                        className="w-full p-2 border rounded"
-                        name="country"
-                        value={editForm.country || ""}
-                        onChange={(e) => setEditForm({ ...editForm, country: e.target.value })}
-                      >
-                        <option value="">País</option>
-                        {countries.map((country) => (
-                          <option key={country.code} value={country.name}>
-                            {country.name}
-                          </option>
-                        ))}
-                      </select>
-                    ) : (
-                      fornecedor.country
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <Input
-                        name="phone"
-                        value={editForm.phone || ""}
-                        onChange={handleEditChange}
-                      />
-                    ) : (
-                      fornecedor.phone
-                    )}
-                  </div>
-                  <div>
-                    {editingId === fornecedor.id ? (
-                      <Input
-                        name="mobile"
-                        value={editForm.mobile || ""}
-                        onChange={handleEditChange}
-                      />
-                    ) : (
-                      fornecedor.mobile
-                    )}
-                  </div>
+                  <div className="truncate-cell">{fornecedor.name}</div>
+                  <div className="truncate-cell">{fornecedor.taxId}</div>
+                  <div className="truncate-cell">{fornecedor.description}</div>
+                  <div className="truncate-cell">{`${fornecedor.address} - ${fornecedor.number}`}</div>
+                  <div className="truncate-cell">{`${fornecedor.city}/${fornecedor.state}`}</div>
+                  <div className="truncate-cell">{fornecedor.country}</div>
+                  <div className="truncate-cell">{fornecedor.phone}</div>
+                  <div className="truncate-cell">{fornecedor.mobile}</div>
+                  <div className="truncate-cell">{fornecedor.id}</div>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleEdit(fornecedor)}
+                      onClick={() => handleOpenView(fornecedor)}
                     >
-                      {editingId === fornecedor.id ? (
-                        <Save className="h-4 w-4" />
-                      ) : (
-                        <Edit className="h-4 w-4" />
-                      )}
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleOpenEdit(fornecedor)}
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => handleDelete(fornecedor.id)}
+                      onClick={() => {
+                        setFornecedorToDelete(fornecedor.id);
+                        setOpenDeleteDialog(true);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -511,6 +239,122 @@ export const FornecedoresPage = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Drawer para visuzliacao */}
+      <Drawer open={openViewDrawer} onOpenChange={setOpenViewDrawer}>
+        <DrawerContent className="max-h-[90vh] p-8">
+          <DrawerHeader>
+            <DrawerTitle>Visualizar Fornecedor</DrawerTitle>
+            <DrawerDescription>
+              Detalhes completos do fornecedor
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 overflow-y-auto">
+            {fornecedorToView && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Nome</label>
+                    <Input value={fornecedorToView.name} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Documento</label>
+                    <Input value={fornecedorToView.taxId} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Descrição</label>
+                    <Input value={fornecedorToView.description} readOnly />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Endereço</label>
+                    <Input value={fornecedorToView.address} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Número</label>
+                    <Input value={fornecedorToView.number} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Cidade</label>
+                    <Input value={fornecedorToView.city} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Estado</label>
+                    <Input value={fornecedorToView.state} readOnly />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">País</label>
+                    <Input value={fornecedorToView.country} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Telefone</label>
+                    <Input value={fornecedorToView.phone} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Celular</label>
+                    <Input value={fornecedorToView.mobile} readOnly />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <DrawerFooter>
+            <DrawerClose asChild>
+              <Button variant="destructive">Fechar</Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Drawer para criação/edição */}
+      <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
+        <DrawerContent className="max-h-[90vh] p-8">
+          <DrawerHeader>
+            <DrawerTitle>
+              {currentFornecedor ? "Editar Fornecedor" : "Novo Fornecedor"}
+            </DrawerTitle>
+            <DrawerDescription>
+              {currentFornecedor
+                ? "Atualize as informações do fornecedor"
+                : "Preencha os campos para cadastrar um novo fornecedor"}
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 overflow-y-auto">
+            <FornecedorForm
+              onSubmit={handleSubmit}
+              defaultValues={currentFornecedor || undefined}
+              loading={isSubmitting}
+              onCancel={() => setOpenDrawer(false)}
+            />
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {/* Dialog de confirmação para exclusão */}
+      <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este fornecedor? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 };

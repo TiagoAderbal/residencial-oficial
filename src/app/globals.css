@@ -78,3 +78,10 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+.truncate-cell {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
