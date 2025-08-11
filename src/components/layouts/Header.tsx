@@ -31,6 +31,7 @@ export const Header = () => {
     toast.success("Deslogado com sucesso!", { position: "top-center" });
   };
 
+  console.log("Header user é: ", user);
   return (
     <header className="h-header px-2 bg-slate-100 dark:bg-slate-900 border-b border-slate-50 dark:border-slate-900">
       <nav className="flex items-center justify-between h-full max-w-7xl mx-auto">
@@ -78,12 +79,12 @@ export const Header = () => {
             </DropdownMenuContent>
           </DropdownMenu>
 
-          {user && (
+          {user?.username && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-5">
                   <Avatar className="size-7">
-                    {/* <AvatarFallback>{user.username.slice(0, 1).toUpperCase() || ""}</AvatarFallback> */}
+                    <AvatarFallback>{user.username.slice(0, 1).toUpperCase() || ""}</AvatarFallback>
                   </Avatar>
 
                   <ChevronDown

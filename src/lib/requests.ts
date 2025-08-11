@@ -3,6 +3,7 @@ import { api } from "./api";
 import { APISignIn, APISignUp } from "@/types/Auth";
 import { APIUpdateUser } from "@/types/User";
 import { Fornecedor, APIGetFornecedores, APICreateFornecedor, APIUpdateFornecedor, APIDeleteFornecedor } from "@/types/Fornecedor";
+import { PlanoConta, APIGetPlanosConta, APICreatePlanoConta, APIUpdatePlanoConta, APIDeletePlanoConta } from "@/types/PlanoContas";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
@@ -32,7 +33,8 @@ export const updateUser = async (data: FormData) => {
     })
 }
 
-/** Fornecedores */export const getFornecedores = async () => {
+// Fornecedores
+export const getFornecedores = async () => {
     return await api<APIGetFornecedores>({
         endpoint: 'fornecedores/',
         method: 'GET'
@@ -60,4 +62,35 @@ export const deleteFornecedor = async (id: number) => {
         endpoint: `fornecedor/${id}/`,
         method: 'DELETE'
     })
+}
+
+// Plano de Contas
+export const getPlanoDeContas = async () => {
+    return await api<APIGetPlanosConta>({
+        endpoint: 'plano-de-contas/',
+        method: 'GET'
+    });
+}
+
+export const createPlanoConta = async (data: Omit<PlanoConta, 'id' | 'subMenus'>) => {
+    return await api<APICreatePlanoConta>({
+        endpoint: 'plano-de-contas/',
+        method: 'POST',
+        data
+    });
+}
+
+export const updatePlanoConta = async (id: number, data: Partial<PlanoConta>) => {
+    return await api<APIUpdatePlanoConta>({
+        endpoint: `plano-de-conta/${id}/`,
+        method: 'PUT',
+        data
+    });
+}
+
+export const deletePlanoConta = async (id: number) => {
+    return await api<APIDeletePlanoConta>({
+        endpoint: `plano-de-conta/${id}/`,
+        method: 'DELETE'
+    });
 }

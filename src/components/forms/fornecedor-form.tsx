@@ -12,20 +12,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { MaskedInput } from "@/components/ui/masked-input";
-
-type FornecedorFormValues = {
-  name: string;
-  taxId: string;
-  description: string;
-  address: string;
-  number: string;
-  city: string;
-  state: string;
-  country: string;
-  phone: string;
-  mobile: string;
-};
+import { fornecedorSchema, FornecedorFormValues } from "@/lib/schemas/fornecedorSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export const FornecedorForm = ({
   onSubmit,
@@ -39,6 +27,7 @@ export const FornecedorForm = ({
   onCancel: () => void;
 }) => {
   const form = useForm<FornecedorFormValues>({
+    resolver: zodResolver(fornecedorSchema),
     defaultValues: defaultValues || {
       name: "",
       taxId: "",
@@ -53,10 +42,10 @@ export const FornecedorForm = ({
     },
   });
 
-  const documentValue = form.watch("taxId");
-  const documentMask = documentValue?.slice(9, 11) === "00"
-    ? "99.999.999/9999-99"
-    : "999.999.999-99";
+  // Campos com máscara dinâmica
+  const taxIdValue = form.watch("taxId");
+  const phoneValue = form.watch("phone");
+  const mobileValue = form.watch("mobile");
 
   return (
     <Form {...form}>
@@ -85,9 +74,30 @@ export const FornecedorForm = ({
                   <Input
                     {...field}
                     required
-                    placeholder={documentMask === "999.999.999-99"
-                      ? "000.000.000-00"
-                      : "00.000.000/0000-00"}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const cleaned = value.replace(/\D/g, '');
+
+                      if (cleaned.length <= 11) {
+                        // Formata como CPF
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/(\d{3})(\d)/, '$1.$2')
+                          .replace(/(\d{3})(\d)/, '$1.$2')
+                          .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                          .replace(/(-\d{2})\d+?$/, '$1'));
+                      } else {
+                        // Formata como CNPJ
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/^(\d{2})(\d)/, '$1.$2')
+                          .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                          .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                          .replace(/(\d{4})(\d)/, '$1-$2')
+                          .replace(/(-\d{2})\d+?$/, '$1'));
+                      }
+                    }}
+                    placeholder={taxIdValue?.length > 14 ? '00.000.000/0000-00' : '000.000.000-00'}
                   />
                 </FormControl>
                 <FormMessage />
@@ -195,7 +205,30 @@ export const FornecedorForm = ({
               <FormItem>
                 <FormLabel>Telefone</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const cleaned = value.replace(/\D/g, '');
+
+                      if (cleaned.length <= 10) {
+                        // Formato: (00) 0000-0000
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '($1) $2')
+                          .replace(/(\d{4})(\d)/, '$1-$2')
+                          .replace(/(-\d{4})\d+?$/, '$1'));
+                      } else {
+                        // Formato: (00) 00000-0000
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '($1) $2')
+                          .replace(/(\d{5})(\d)/, '$1-$2')
+                          .replace(/(-\d{4})\d+?$/, '$1'));
+                      }
+                    }}
+                    placeholder="(00) 0000-0000"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -208,7 +241,30 @@ export const FornecedorForm = ({
               <FormItem>
                 <FormLabel>Celular</FormLabel>
                 <FormControl>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const cleaned = value.replace(/\D/g, '');
+
+                      if (cleaned.length <= 10) {
+                        // Formato: (00) 0000-0000
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '($1) $2')
+                          .replace(/(\d{4})(\d)/, '$1-$2')
+                          .replace(/(-\d{4})\d+?$/, '$1'));
+                      } else {
+                        // Formato: (00) 00000-0000
+                        field.onChange(value
+                          .replace(/\D/g, '')
+                          .replace(/(\d{2})(\d)/, '($1) $2')
+                          .replace(/(\d{5})(\d)/, '$1-$2')
+                          .replace(/(-\d{4})\d+?$/, '$1'));
+                      }
+                    }}
+                    placeholder="(00) 00000-0000"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
