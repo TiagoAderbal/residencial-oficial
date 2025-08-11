@@ -1,9 +1,14 @@
 export type User = {
     id: number,
-    avatar: string,
-    name: string,
+    username: string,
     email: string,
-    last_access: string
+    first_name: string,
+    last_name: string,
+    is_superuser: boolean,
+    is_staff: boolean,
+    is_active: boolean,
+    groups: [],
+    user_permissions: []
 }
 
 export type APIUpdateUser = {

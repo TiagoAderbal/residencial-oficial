@@ -2,14 +2,12 @@ import { SignInData, SignUpData } from "@/lib/schemas/authSchema";
 import { api } from "./api";
 import { APISignIn, APISignUp } from "@/types/Auth";
 import { APIUpdateUser } from "@/types/User";
-import { APICreateChat, APIDeleteChat, APIGetChats } from "@/types/Chat";
-import { NewChatData } from "@/lib/schemas/chatSchema";
-import { APICreateMessage, APIDeleteMessage, APIGetMessages } from "@/types/Message";
+import { Fornecedor, APIGetFornecedores, APICreateFornecedor, APIUpdateFornecedor, APIDeleteFornecedor } from "@/types/Fornecedor";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
     return await api<APISignIn>({
-        endpoint: 'accounts/signin',
+        endpoint: '/authentication/login/',
         method: 'POST',
         withAuth: false,
         data
@@ -34,46 +32,32 @@ export const updateUser = async (data: FormData) => {
     })
 }
 
-/** Chat */
-export const getChats = async () => {
-    return await api<APIGetChats>({
-        endpoint: 'chats/'
+/** Fornecedores */export const getFornecedores = async () => {
+    return await api<APIGetFornecedores>({
+        endpoint: 'fornecedores/',
+        method: 'GET'
     })
 }
 
-export const createChat = async (data: NewChatData) => {
-    return await api<APICreateChat>({
-        endpoint: 'chats/',
+export const createFornecedor = async (data: Omit<Fornecedor, 'id'>) => {
+    return await api<APICreateFornecedor>({
+        endpoint: 'fornecedores/',
         method: 'POST',
         data
     })
 }
 
-export const deleteChat = async (chat_id: number) => {
-    return await api<APIDeleteChat>({
-        endpoint: `chats/${chat_id}`,
-        method: 'DELETE'
+export const updateFornecedor = async (id: number, data: Partial<Fornecedor>) => {
+    return await api<APIUpdateFornecedor>({
+        endpoint: `fornecedor/${id}/`,
+        method: 'PUT',
+        data
     })
 }
 
-export const getChatMessages = async (chat_id: number) => {
-    return await api<APIGetMessages>({
-        endpoint: `chats/${chat_id}/messages/`
-    })
-}
-
-export const createChatMessage = async (chat_id: number, data: FormData) => {
-    return await api<APICreateMessage>({
-        endpoint: `chats/${chat_id}/messages/`,
-        method: 'POST',
-        data,
-        withAttachment: true
-    })
-}
-
-export const deleteChatMessage = async (chat_id: number, message_id: number) => {
-    return await api<APIDeleteMessage>({
-        endpoint: `chats/${chat_id}/messages/${message_id}`,
+export const deleteFornecedor = async (id: number) => {
+    return await api<APIDeleteFornecedor>({
+        endpoint: `fornecedor/${id}/`,
         method: 'DELETE'
     })
 }

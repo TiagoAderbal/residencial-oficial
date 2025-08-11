@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 /* Sign In */
 export const signInSchema = z.object({
-    identifier: z.string().min(1, { message: "Email ou usuário obrigatório" }),
+    username: z.string().min(1, { message: "Email ou usuário obrigatório" }),
     password: z.string().min(1, { message: "Senha obrigatória" })
 })
 

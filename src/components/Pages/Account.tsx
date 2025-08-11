@@ -11,9 +11,6 @@ import { toast } from "sonner";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import {
   Form,
@@ -26,8 +23,6 @@ import {
 import { Input } from "../ui/input";
 import { Skeleton } from "../ui/skeleton";
 import { Button } from "../ui/button";
-import { Label } from "../ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 
 export const AccountPage = () => {
   const { user, setUser } = useAuthStore();
@@ -39,7 +34,7 @@ export const AccountPage = () => {
   const form = useForm<UpdateUserData>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
-      name: user?.name,
+      name: user?.username,
       email: user?.email,
       password: "",
       confirm_password: "",
@@ -103,28 +98,6 @@ export const AccountPage = () => {
                   </>
                 ) : (
                   <>
-                    <div className="space-y-3">
-                      <Label htmlFor="avatar">Seu Avatar</Label>
-
-                      <div className="flex items-center gap-3">
-                        <Avatar className="size-11">
-                          <AvatarImage
-                            src={avatarUrl || user?.avatar}
-                            alt={user?.name}
-                          />
-                          <AvatarFallback>
-                            {user?.name.slice(0, 2)}
-                          </AvatarFallback>
-                        </Avatar>
-
-                        <Input
-                          id="avatar"
-                          type="file"
-                          onChange={handleAvatarChange}
-                        />
-                      </div>
-                    </div>
-
                     <FormField
                       control={form.control}
                       name="name"

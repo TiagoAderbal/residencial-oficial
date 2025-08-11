@@ -12,7 +12,7 @@ export const handleSignIn = async (data: SignInData) => {
     if (response.data) {
         cookies().set({
             name: process.env.NEXT_PUBLIC_AUTH_KEY as string,
-            value: response.data.access_token,
+            value: response.data.access,
             httpOnly: true,
             maxAge: 86400 * 7, // 7days
         })
@@ -27,7 +27,7 @@ export const handleSignUp = async (data: SignUpData) => {
     if (response.data) {
         cookies().set({
             name: process.env.NEXT_PUBLIC_AUTH_KEY as string,
-            value: response.data.access_token,
+            value: response.data.access,
             httpOnly: true,
             maxAge: 86400 * 7, // 7days
         })
@@ -46,9 +46,10 @@ export const handleGetUser = async () => {
     })
 
     const jsonResponse = await response.json()
-    const userData = jsonResponse.user
+    const userData = jsonResponse
 
     if (userData) return userData as User
+    console.log("userData é: ", userData)
 
     return null
 }

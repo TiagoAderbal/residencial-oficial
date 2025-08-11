@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInData, signInSchema } from "@/lib/schemas/authSchema";
-import { handleSignIn } from "@/lib/server/auth";
+import { handleGetUser, handleSignIn } from "@/lib/server/auth";
 import { useAuthStore } from "@/store/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -36,7 +36,7 @@ export const SignInPage = () => {
   const form = useForm<SignInData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      identifier: "",
+      username: "",
       password: "",
     },
   });
@@ -52,7 +52,11 @@ export const SignInPage = () => {
       return;
     }
 
-    setUser(response.data.user);
+
+    const getUser = await handleGetUser();
+    if (getUser) {
+      setUser(getUser);
+    }
     toast.success("Autenticado com sucesso!", { position: "top-center" });
 
     // Redirect to home
@@ -83,7 +87,7 @@ export const SignInPage = () => {
                   <>
                     <FormField
                       control={form.control}
-                      name="identifier"
+                      name="username"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email ou Usuário</FormLabel>
