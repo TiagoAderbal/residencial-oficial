@@ -4,6 +4,7 @@ import { APISignIn, APISignUp } from "@/types/Auth";
 import { APIUpdateUser } from "@/types/User";
 import { Fornecedor, APIGetFornecedores, APICreateFornecedor, APIUpdateFornecedor, APIDeleteFornecedor } from "@/types/Fornecedor";
 import { PlanoConta, APIGetPlanosConta, APICreatePlanoConta, APIUpdatePlanoConta, APIDeletePlanoConta } from "@/types/PlanoContas";
+import { TipoConta, APIGetTipoContas, APICreateTipoConta, APIUpdateTipoConta, APIDeleteTipoConta } from "@/types/TipoContas";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
@@ -91,6 +92,37 @@ export const updatePlanoConta = async (id: number, data: Partial<PlanoConta>) =>
 export const deletePlanoConta = async (id: number) => {
     return await api<APIDeletePlanoConta>({
         endpoint: `plano-de-conta/${id}/`,
+        method: 'DELETE'
+    });
+}
+
+// Tipo de Contas
+export const getTipoContas = async () => {
+    return await api<APIGetTipoContas>({
+        endpoint: 'tipo-de-contas/',
+        method: 'GET'
+    });
+}
+
+export const createTipoConta = async (data: Omit<TipoConta, 'id'>) => {
+    return await api<APICreateTipoConta>({
+        endpoint: 'tipo-de-contas/',
+        method: 'POST',
+        data
+    });
+}
+
+export const updateTipoConta = async (id: number, data: Partial<TipoConta>) => {
+    return await api<APIUpdateTipoConta>({
+        endpoint: `tipo-de-conta/${id}/`,
+        method: 'PUT',
+        data
+    });
+}
+
+export const deleteTipoConta = async (id: number) => {
+    return await api<APIDeleteTipoConta>({
+        endpoint: `tipo-de-conta/${id}/`,
         method: 'DELETE'
     });
 }

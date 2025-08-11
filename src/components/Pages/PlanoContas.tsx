@@ -188,7 +188,7 @@ export const PlanoDeContasPage = () => {
                 <div>Nome da Conta</div>
                 <div>Descrição</div>
                 <div>Tipo</div>
-                <div className="text-right">Ações</div>
+                <div className="text-left">Ações</div>
               </div>
               {planosConta.map((conta) => (
                 <div key={conta.id} className="space-y-0">
@@ -199,7 +199,7 @@ export const PlanoDeContasPage = () => {
                     <div>{conta.name}</div>
                     <div>{conta.description}</div>
                     <div>{conta.type === 's' ? 'Sintética' : 'Analítica'}</div>
-                    <div className="flex gap-2 justify-end">
+                    <div className="flex gap-2 justify-start">
                       <Button
                         variant="outline"
                         size="icon"

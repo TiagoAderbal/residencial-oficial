@@ -1,6 +1,6 @@
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Truck, Search, LayoutDashboard, ScanHeart, FolderTree, Home } from "lucide-react";
+import { ChevronDown, ChevronRight, Truck, Search, LayoutDashboard, ScanHeart, FolderTree, Home, BookOpenText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -42,7 +42,7 @@ export const LeftSide = () => {
       items: [
         { title: "Plano de Contas", path: "/plano-de-contas/", icon: <FolderTree className="h-4 w-4" /> },
         { title: "Fornecedores", path: "/fornecedores/", icon: <Truck className="h-4 w-4" /> },
-        { title: "Tipos de Contas", path: "/tipo-de-contas" },
+        { title: "Tipos de Contas", path: "/tipo-de-contas/", icon: <BookOpenText className="h-4 w-4" /> },
         { title: "Tipos de Documentos", path: "/tipo-de-documentos/" },
         { title: "Formas de Pagamento", path: "/forma-de-pagamentos/" },
         { title: "Tipos de Lançamentos", path: "tipo-de-lancamentos/" },
