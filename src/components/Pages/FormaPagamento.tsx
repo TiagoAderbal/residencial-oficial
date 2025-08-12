@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { TipoDocumentosForm } from "@/components/forms/tipo-documentos-form";
+import { FormaPagamentoForm } from "@/components/forms/forma-pagam-form";
 import {
   Drawer,
   DrawerContent,
@@ -33,56 +33,57 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  getTipoDocumentos,
-  createTipoDocumento,
-  updateTipoDocumento,
-  deleteTipoDocumento
+  getFormaPagamentos,
+  createFormaPagamento,
+  updateFormaPagamento,
+  deleteFormaPagamento
 } from "@/lib/requests";
 
-type TipoDocumento = {
+type FormaPagamento = {
   id: number;
   name: string;
   description: string;
 };
 
-export const TipoDocumentoPage = () => {
-  const [tipoDocumentos, setTipoDocumentos] = useState<TipoDocumento[]>([]);
+export const FormaPagamentoPage = () => {
+  const [formaPagamentos, setFormaPagamentos] = useState<FormaPagamento[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [currentTipoDocumento, setCurrentTipoDocumento] = useState<TipoDocumento | null>(null);
+  const [currentFormaPagamento, setCurrentFormaPagamento] = useState<FormaPagamento | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [tipoDocumentoToDelete, setTipoDocumentoToDelete] = useState<number | null>(null);
+  const [formaPagamentoToDelete, setFormaPagamentoToDelete] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
-  const [tipoDocumentoToView, setTipoDocumentoToView] = useState<TipoDocumento | null>(null);
+  const [formaPagamentoToView, setFormaPagamentoToView] = useState<FormaPagamento | null>(null);
 
-  // Fetch tipo de Documentos
+  // Fetch formas de pagamento
   useEffect(() => {
-    const fetchTipoDocumentos = async () => {
+    const fetchFormaPagamentos = async () => {
       try {
-        const { data: response } = await getTipoDocumentos();
-        setTipoDocumentos(response?.results || []);
+        const { data: response } = await getFormaPagamentos();
+        setFormaPagamentos(response?.results || []);
       } catch (error) {
-        toast.error("Erro ao carregar tipos de Documento");
+        toast.error("Erro ao carregar formas de pagamento");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTipoDocumentos();
+    fetchFormaPagamentos();
   }, []);
 
   const handleOpenCreate = () => {
-    setCurrentTipoDocumento(null);
+    setCurrentFormaPagamento(null);
     setOpenDrawer(true);
   };
 
-  const handleOpenEdit = (tipoDocumento: TipoDocumento) => {
-    setCurrentTipoDocumento(tipoDocumento);
+  const handleOpenEdit = (formaPagamento: FormaPagamento) => {
+    setCurrentFormaPagamento(formaPagamento);
     setOpenDrawer(true);
   };
 
   const handleSubmit = async (values: { name: string; description?: string }) => {
+    console.log("clicou salvar")
     setIsSubmitting(true);
     try {
       const data = {
@@ -90,44 +91,44 @@ export const TipoDocumentoPage = () => {
         description: values.description || '', // Garante que description sempre será string
       };
 
-      if (currentTipoDocumento) {
-        const { data: response } = await updateTipoDocumento(currentTipoDocumento.id, data);
+      if (currentFormaPagamento) {
+        const { data: response } = await updateFormaPagamento(currentFormaPagamento.id, data);
         if (response) {
-          setTipoDocumentos(tipoDocumentos.map(t =>
-            t.id === currentTipoDocumento.id ? { ...t, ...response } : t
+          setFormaPagamentos(formaPagamentos.map(t =>
+            t.id === currentFormaPagamento.id ? { ...t, ...response } : t
           ));
-          toast.success("Tipo de Documento atualizado com sucesso!");
+          toast.success("Forma de pagamento atualizada com sucesso!");
         }
       } else {
-        const { data: response } = await createTipoDocumento(data);
+        const { data: response } = await createFormaPagamento(data);
         if (response) {
-          setTipoDocumentos([...tipoDocumentos, response]);
-          toast.success("Tipo de Documento cadastrado com sucesso!");
+          setFormaPagamentos([...formaPagamentos, response]);
+          toast.success("Forma de pagamento cadastrada com sucesso!");
         }
       }
       setOpenDrawer(false);
     } catch (error) {
-      toast.error(`Erro ao ${currentTipoDocumento ? "atualizar" : "cadastrar"} tipo de Documento`);
+      toast.error(`Erro ao ${currentFormaPagamento ? "atualizar" : "cadastrar"} forma de pagamento`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleOpenView = (tipoDocumento: TipoDocumento) => {
-    setTipoDocumentoToView(tipoDocumento);
+  const handleOpenView = (formaPagamento: FormaPagamento) => {
+    setFormaPagamentoToView(formaPagamento);
     setOpenViewDrawer(true);
   };
 
   const handleDelete = async () => {
-    if (!tipoDocumentoToDelete) return;
+    if (!formaPagamentoToDelete) return;
 
     try {
-      await deleteTipoDocumento(tipoDocumentoToDelete);
-      setTipoDocumentos(tipoDocumentos.filter(t => t.id !== tipoDocumentoToDelete));
-      toast.success("Tipo de Documento excluído com sucesso!");
+      await deleteFormaPagamento(formaPagamentoToDelete);
+      setFormaPagamentos(formaPagamentos.filter(t => t.id !== formaPagamentoToDelete));
+      toast.success("Forma de pagamento excluída com sucesso!");
       setOpenDeleteDialog(false);
     } catch (error) {
-      toast.error("Erro ao excluir tipo de Documento");
+      toast.error("Erro ao excluir forma de pagamento");
     }
   };
 
@@ -137,14 +138,14 @@ export const TipoDocumentoPage = () => {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Tipos de Documento</CardTitle>
+              <CardTitle>Formas de Pagamento</CardTitle>
               <CardDescription>
-                Gerencie os tipos de Documento contábil
+                Gerencie as formas de pagamento
               </CardDescription>
             </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Novo Tipo de Documento
+              Nova Forma de Pagamento
             </Button>
           </div>
         </CardHeader>
@@ -161,23 +162,23 @@ export const TipoDocumentoPage = () => {
                 <div>Descrição</div>
                 <div className="text-left">Ações</div>
               </div>
-              {tipoDocumentos.map((tipoDocumento) => (
-                <div key={tipoDocumento.id} className="grid grid-cols-4 p-4 border-t items-center text-sm">
-                  <div>{tipoDocumento.id}</div>
-                  <div>{tipoDocumento.name}</div>
-                  <div>{tipoDocumento.description || '-'}</div>
+              {formaPagamentos.map((formaPagamento) => (
+                <div key={formaPagamento.id} className="grid grid-cols-4 p-4 border-t items-center text-sm">
+                  <div>{formaPagamento.id}</div>
+                  <div>{formaPagamento.name}</div>
+                  <div>{formaPagamento.description || '-'}</div>
                   <div className="flex gap-2 justify-start">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleOpenView(tipoDocumento)}
+                      onClick={() => handleOpenView(formaPagamento)}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleOpenEdit(tipoDocumento)}
+                      onClick={() => handleOpenEdit(formaPagamento)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -185,7 +186,7 @@ export const TipoDocumentoPage = () => {
                       variant="destructive"
                       size="icon"
                       onClick={() => {
-                        setTipoDocumentoToDelete(tipoDocumento.id);
+                        setFormaPagamentoToDelete(formaPagamento.id);
                         setOpenDeleteDialog(true);
                       }}
                     >
@@ -203,22 +204,22 @@ export const TipoDocumentoPage = () => {
       <Drawer open={openViewDrawer} onOpenChange={setOpenViewDrawer}>
         <DrawerContent className="max-h-[90vh] p-8">
           <DrawerHeader>
-            <DrawerTitle>Visualizar Tipo de Documento</DrawerTitle>
+            <DrawerTitle>Visualizar Forma de Pagamento</DrawerTitle>
             <DrawerDescription>
-              Detalhes completos do tipo de Documento
+              Detalhes completos da forma de pagamento
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
-            {tipoDocumentoToView && (
+            {formaPagamentoToView && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">ID</label>
-                    <Input value={tipoDocumentoToView.id} readOnly />
+                    <Input value={formaPagamentoToView.id} readOnly />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Nome</label>
-                    <Input value={tipoDocumentoToView.name} readOnly />
+                    <Input value={formaPagamentoToView.name} readOnly />
                   </div>
                 </div>
 
@@ -226,7 +227,7 @@ export const TipoDocumentoPage = () => {
                   <div>
                     <label className="block text-sm font-medium mb-1">Descrição</label>
                     <Input
-                      value={tipoDocumentoToView.description || '-'}
+                      value={formaPagamentoToView.description || '-'}
                       readOnly
                     />
                   </div>
@@ -247,18 +248,18 @@ export const TipoDocumentoPage = () => {
         <DrawerContent className="max-h-[90vh] p-8">
           <DrawerHeader>
             <DrawerTitle>
-              {currentTipoDocumento ? "Editar Tipo de Documento" : "Novo Tipo de Documento"}
+              {currentFormaPagamento ? "Editar Forma de Pagamento" : "Nova Forma de Pagamento"}
             </DrawerTitle>
             <DrawerDescription>
-              {currentTipoDocumento
-                ? "Atualize as informações do tipo de Documento"
-                : "Preencha os campos para cadastrar um novo tipo de Documento"}
+              {currentFormaPagamento
+                ? "Atualize as informações da forma de pagamento"
+                : "Preencha os campos para cadastrar uma nova forma de pagamento"}
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
-            <TipoDocumentosForm
+            <FormaPagamentoForm
               onSubmit={handleSubmit}
-              defaultValues={currentTipoDocumento || undefined}
+              defaultValues={currentFormaPagamento || undefined}
               loading={isSubmitting}
               onCancel={() => setOpenDrawer(false)}
             />
@@ -272,7 +273,7 @@ export const TipoDocumentoPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este tipo de Documento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta forma de pagamento? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

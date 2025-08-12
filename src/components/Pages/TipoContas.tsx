@@ -144,7 +144,7 @@ export const TipoContaPage = () => {
             </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
-              Novo Tipo
+              Novo Tipo de Conta
             </Button>
           </div>
         </CardHeader>
