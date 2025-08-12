@@ -84,7 +84,7 @@ export const Header = () => {
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="gap-5">
                   <Avatar className="size-7">
-                    <AvatarFallback>{user.username.slice(0, 1).toUpperCase() || ""}</AvatarFallback>
+                    <AvatarFallback>{user.first_name.slice(0, 1).toUpperCase() || ""}</AvatarFallback>
                   </Avatar>
 
                   <ChevronDown

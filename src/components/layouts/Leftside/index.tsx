@@ -1,6 +1,19 @@
 import { useAuthStore } from "@/store/authStore";
 import { useState } from "react";
-import { ChevronDown, ChevronRight, Truck, Search, LayoutDashboard, ScanHeart, FolderTree, Home, BookOpenText, FileCheck, BadgeDollarSign } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Truck,
+  Search,
+  FileChartLine,
+  HeartHandshake,
+  FolderTree,
+  Home,
+  BookOpenText,
+  FileCheck,
+  BadgeDollarSign,
+  ClipboardList
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -38,21 +51,21 @@ export const LeftSide = () => {
     },
     {
       title: "Financeiro",
-      icon: <LayoutDashboard className="h-4 w-4" />,
+      icon: <FileChartLine className="h-4 w-4" />,
       items: [
         { title: "Plano de Contas", path: "/plano-de-contas/", icon: <FolderTree className="h-4 w-4" /> },
         { title: "Fornecedores", path: "/fornecedores/", icon: <Truck className="h-4 w-4" /> },
         { title: "Tipos de Contas", path: "/tipo-de-contas/", icon: <BookOpenText className="h-4 w-4" /> },
         { title: "Tipos de Documentos", path: "/tipo-de-documentos/", icon: <FileCheck className="h-4 w-4" /> },
         { title: "Formas de Pagamento", path: "/forma-de-pagamentos/", icon: <BadgeDollarSign className="h-4 w-4" /> },
-        { title: "Tipos de Lançamentos", path: "tipo-de-lancamentos/" },
+        { title: "Tipos de Lançamentos", path: "/tipo-de-lancamentos/", icon: <ClipboardList className="h-4 w-4" /> },
         { title: "Lançamentos", path: "/lancamentos/" }
       ],
       path: ""
     },
     {
       title: "Operacional",
-      icon: <ScanHeart className="h-4 w-4" />,
+      icon: <HeartHandshake className="h-4 w-4" />,
       items: [
         { title: "Medicamentos", path: "/medicamentos/" },
         { title: "Pacientes", path: "/pacientes/" },

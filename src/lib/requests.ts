@@ -7,6 +7,7 @@ import { PlanoConta, APIGetPlanosConta, APICreatePlanoConta, APIUpdatePlanoConta
 import { TipoConta, APIGetTipoContas, APICreateTipoConta, APIUpdateTipoConta, APIDeleteTipoConta } from "@/types/TipoContas";
 import { TipoDocumento, APIGetTipoDocumentos, APICreateTipoDocumento, APIUpdateTipoDocumento, APIDeleteTipoDocumento } from "@/types/TipoDocumentos";
 import { FormaPagamento, APIGetFormaPagamentos, APICreateFormaPagamento, APIUpdateFormaPagamento, APIDeleteFormaPagamento } from "@/types/FormaPagamento";
+import { TipoLancamento, APIGetTipoLancamentos, APICreateTipoLancamento, APIUpdateTipoLancamento, APIDeleteTipoLancamento } from "@/types/TipoLancamentos";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
@@ -187,6 +188,37 @@ export const updateFormaPagamento = async (id: number, data: Partial<FormaPagame
 export const deleteFormaPagamento = async (id: number) => {
     return await api<APIDeleteFormaPagamento>({
         endpoint: `forma-de-pagamento/${id}/`,
+        method: 'DELETE'
+    });
+}
+
+// Tipo de Lancamentos
+export const getTipoLancamentos = async () => {
+    return await api<APIGetTipoLancamentos>({
+        endpoint: 'tipo-de-lancamentos/',
+        method: 'GET'
+    });
+}
+
+export const createTipoLancamento = async (data: Omit<TipoLancamento, 'id'>) => {
+    return await api<APICreateTipoLancamento>({
+        endpoint: 'tipo-de-lancamentos/',
+        method: 'POST',
+        data
+    });
+}
+
+export const updateTipoLancamento = async (id: number, data: Partial<TipoLancamento>) => {
+    return await api<APIUpdateTipoLancamento>({
+        endpoint: `tipo-de-lancamento/${id}/`,
+        method: 'PUT',
+        data
+    });
+}
+
+export const deleteTipoLancamento = async (id: number) => {
+    return await api<APIDeleteTipoLancamento>({
+        endpoint: `tipo-de-lancamento/${id}/`,
         method: 'DELETE'
     });
 }

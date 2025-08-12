@@ -2,8 +2,6 @@
 
 import Image from "next/image";
 import HomeData from "@/assets/home-data.svg";
-import { Button } from "../ui/button";
-import { Lock } from "lucide-react";
 
 export const HomePage = () => {
 
@@ -24,11 +22,6 @@ export const HomePage = () => {
 
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-slate-500 dark:text-slate-400">
-          <Lock className="size-4" strokeWidth={3} />
-          Suas mensagens pessoais são protegidas com a criptografia de ponta a
-          ponta.
-        </div>
       </div>
     </div>
   );

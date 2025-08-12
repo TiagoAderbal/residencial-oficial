@@ -26,28 +26,21 @@ import { Button } from "../ui/button";
 
 export const AccountPage = () => {
   const { user, setUser } = useAuthStore();
+  console.log(user);
 
   const [loading, setLoading] = useState(false);
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [avatarUrl, setAvatarUrl] = useState("");
 
   const form = useForm<UpdateUserData>({
     resolver: zodResolver(updateUserSchema),
     defaultValues: {
       name: user?.username,
+      first_name: user?.first_name,
+      last_name: user?.last_name,
       email: user?.email,
       password: "",
       confirm_password: "",
     },
   });
-
-  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setAvatar(file);
-      setAvatarUrl(URL.createObjectURL(file));
-    }
-  };
 
   const onSubmit = async (values: UpdateUserData) => {
     setLoading(true);
@@ -55,9 +48,10 @@ export const AccountPage = () => {
     const formData = new FormData();
 
     formData.append("name", values.name);
+    formData.append("firstname", values.first_name);
+    formData.append("lastname", values.last_name);
     formData.append("email", values.email);
     formData.append("password", values.password);
-    formData.append("avatar", avatar || "");
 
     const response = await updateUser(formData);
 
@@ -71,10 +65,10 @@ export const AccountPage = () => {
     setUser(user);
 
     formData.set("name", values.name);
+    formData.set("firstname", values.first_name);
+    formData.set("lastname", values.last_name);
     formData.set("email", values.email);
     formData.set("password", values.password);
-    formData.set("avatar", avatar || "");
-    setAvatar(null);
     setLoading(false);
 
     toast.success("Perfil atualizado com sucesso!", { position: "top-center" });
@@ -103,9 +97,37 @@ export const AccountPage = () => {
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Seu Nome</FormLabel>
+                          <FormLabel>Usuário de acesso</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: Jõao da Silva" {...field} />
+                            <Input placeholder="Ex: joaodasilva" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="first_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Primeiro Nome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: Jõao" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="last_name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Sobrenome</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Ex: da Silva" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
