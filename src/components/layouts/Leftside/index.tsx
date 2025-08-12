@@ -12,7 +12,8 @@ import {
   BookOpenText,
   FileCheck,
   BadgeDollarSign,
-  ClipboardList
+  ClipboardList,
+  Pill
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +68,7 @@ export const LeftSide = () => {
       title: "Operacional",
       icon: <HeartHandshake className="h-4 w-4" />,
       items: [
-        { title: "Medicamentos", path: "/medicamentos/" },
+        { title: "Medicamentos", path: "/medicamentos/", icon: <Pill className="h-4 w-4" /> },
         { title: "Pacientes", path: "/pacientes/" },
         { title: "Prescrição Médica", path: "/prescricoes-medicas/" },
         { title: "Sinais Vitais", path: "/sinais-vitais/" },

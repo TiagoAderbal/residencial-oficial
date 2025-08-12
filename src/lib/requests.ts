@@ -8,6 +8,7 @@ import { TipoConta, APIGetTipoContas, APICreateTipoConta, APIUpdateTipoConta, AP
 import { TipoDocumento, APIGetTipoDocumentos, APICreateTipoDocumento, APIUpdateTipoDocumento, APIDeleteTipoDocumento } from "@/types/TipoDocumentos";
 import { FormaPagamento, APIGetFormaPagamentos, APICreateFormaPagamento, APIUpdateFormaPagamento, APIDeleteFormaPagamento } from "@/types/FormaPagamento";
 import { TipoLancamento, APIGetTipoLancamentos, APICreateTipoLancamento, APIUpdateTipoLancamento, APIDeleteTipoLancamento } from "@/types/TipoLancamentos";
+import { Medicamento, APIGetMedicamentos, APICreateMedicamento, APIUpdateMedicamento, APIDeleteMedicamento } from "@/types/Medicamentos";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
@@ -219,6 +220,37 @@ export const updateTipoLancamento = async (id: number, data: Partial<TipoLancame
 export const deleteTipoLancamento = async (id: number) => {
     return await api<APIDeleteTipoLancamento>({
         endpoint: `tipo-de-lancamento/${id}/`,
+        method: 'DELETE'
+    });
+}
+
+// Medicamentos
+export const getMedicamentos = async () => {
+    return await api<APIGetMedicamentos>({
+        endpoint: 'medicamentos/',
+        method: 'GET'
+    });
+}
+
+export const createMedicamento = async (data: Omit<Medicamento, 'id'>) => {
+    return await api<APICreateMedicamento>({
+        endpoint: 'medicamentos/',
+        method: 'POST',
+        data
+    });
+}
+
+export const updateMedicamento = async (id: number, data: Partial<Medicamento>) => {
+    return await api<APIUpdateMedicamento>({
+        endpoint: `medicamento/${id}/`,
+        method: 'PUT',
+        data
+    });
+}
+
+export const deleteMedicamento = async (id: number) => {
+    return await api<APIDeleteMedicamento>({
+        endpoint: `medicamento/${id}/`,
         method: 'DELETE'
     });
 }
