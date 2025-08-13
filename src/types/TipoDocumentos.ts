@@ -17,5 +17,6 @@ export interface APICreateTipoDocumento {
   description: string;
 }
 
+export type APIGetDetailTipoDocumento = TipoDocumento;
 export type APIUpdateTipoDocumento = APICreateTipoDocumento;
 export type APIDeleteTipoDocumento = void;

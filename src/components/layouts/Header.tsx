@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { toast } from "sonner";
 
-import Logo from "@/assets/logo.svg";
+import Logo from "@/assets/logo.png";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Home, LogOut, Menu, Moon, Sun, User } from "lucide-react";
@@ -34,14 +34,15 @@ export const Header = () => {
   console.log("Header user é: ", user);
   return (
     <header className="h-header px-2 bg-slate-100 dark:bg-slate-900 border-b border-slate-50 dark:border-slate-900">
-      <nav className="flex items-center justify-between h-full max-w-7xl mx-auto">
+      <nav className="flex items-center justify-between h-full ">
         <div
           className="
                     hidden 
-                    min-[480px]:block"
+                    min-[480px]:block
+                    pl-16"
         >
           <Link href="/">
-            <Image src={Logo} alt="Logo" width={170} priority />
+            <Image src={Logo} alt="Logo" width={140} priority />
           </Link>
 
           <Button
@@ -56,7 +57,7 @@ export const Header = () => {
           </Button>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-6 pr-4">
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

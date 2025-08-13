@@ -17,5 +17,6 @@ export interface APICreateTipoConta {
   description: string;
 }
 
+export type APIGetDetailTipoConta = TipoConta;
 export type APIUpdateTipoConta = APICreateTipoConta;
 export type APIDeleteTipoConta = void;

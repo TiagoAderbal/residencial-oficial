@@ -18,6 +18,7 @@ export type APIGetFornecedores = {
   count: number;
 };
 
+export type APIGetDetailFornecedor = Fornecedor;
 export type APICreateFornecedor = Fornecedor;
 export type APIUpdateFornecedor = Fornecedor;
 export type APIDeleteFornecedor = {

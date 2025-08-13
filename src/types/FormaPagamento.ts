@@ -17,5 +17,6 @@ export interface APICreateFormaPagamento {
   description: string;
 }
 
+export type APIGetDetailFormaPagamento = FormaPagamento;
 export type APIUpdateFormaPagamento = APICreateFormaPagamento;
 export type APIDeleteFormaPagamento = void;

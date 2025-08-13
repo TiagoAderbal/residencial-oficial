@@ -14,6 +14,7 @@ export type APIGetPlanosConta = {
   count: number;
 };
 
+export type APIGetDetailPlanoConta = PlanoConta;
 export type APICreatePlanoConta = PlanoConta;
 export type APIUpdatePlanoConta = PlanoConta;
 export type APIDeletePlanoConta = {

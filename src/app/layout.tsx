@@ -14,7 +14,7 @@ export const metadata: Metadata = {
     default: "Home | D Clarice",
   },
   icons: {
-    icon: "/grftalk.png",
+    icon: "/fav.png",
   },
 };
 

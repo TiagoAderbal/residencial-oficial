@@ -247,7 +247,7 @@ export const PlanoDeContasPage = () => {
                       <div>{subConta.name}</div>
                       <div>{subConta.description}</div>
                       <div>{subConta.type === 's' ? 'Sintética' : 'Analítica'}</div>
-                      <div className="flex gap-2 justify-end">
+                      <div className="flex gap-2 justify-start">
                         <Button
                           variant="outline"
                           size="icon"
