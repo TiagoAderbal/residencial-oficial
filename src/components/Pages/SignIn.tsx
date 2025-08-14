@@ -26,9 +26,11 @@ import {
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
+import { Eye, EyeOff } from "lucide-react";
 
 export const SignInPage = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const setUser = useAuthStore((state) => state.setUser);
   const router = useRouter();
@@ -90,10 +92,10 @@ export const SignInPage = () => {
                       name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email ou Usuário</FormLabel>
+                          <FormLabel>Usuário</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Digite seu email ou usuário"
+                              placeholder="Digite seu usuário"
                               {...field}
                             />
                           </FormControl>
@@ -109,7 +111,29 @@ export const SignInPage = () => {
                         <FormItem>
                           <FormLabel>Senha</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: 123456" {...field} />
+                            <div className="relative">
+                              <Input
+                                placeholder="Senha"
+                                type={showPassword ? "text" : "password"}
+                                {...field}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">
+                                  {showPassword ? "Esconder senha" : "Mostrar senha"}
+                                </span>
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

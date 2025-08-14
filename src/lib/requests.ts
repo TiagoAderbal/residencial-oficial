@@ -294,7 +294,7 @@ export const deleteMedicamento = async (id: number) => {
 // Lancamentos
 export const getLancamentos = async () => {
     return await api<APIGetLancamentos>({
-        endpoint: 'lancamentos/',
+        endpoint: 'lancamentos/?page=1',
         method: 'GET'
     });
 }

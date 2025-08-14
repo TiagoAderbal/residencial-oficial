@@ -10,7 +10,6 @@ export const tipoLancamentoSchema = z.object({
   description: z.string()
     .min(1, { message: "Descrição obrigatória" })
     .max(50, { message: "Descrição muito longa (máx. 50 caracteres)" })
-    .optional(),
 });
 
 export type TipoLancamentoFormValues = z.infer<typeof tipoLancamentoSchema>;

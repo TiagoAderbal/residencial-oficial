@@ -9,7 +9,6 @@ import {
   updateFornecedor,
   deleteFornecedor
 } from "@/lib/requests";
-import { estadosBrasileiros } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -80,28 +79,6 @@ export const FornecedoresPage = () => {
     };
 
     fetchFornecedores();
-  }, []);
-
-  // Fetch países
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await fetch(
-          "https://restcountries.com/v3.1/all?fields=name"
-        );
-        const data = await response.json();
-        setCountries(
-          data.map((country: any) => ({
-            code: country.cca2,
-            name: country.name.common,
-          }))
-        );
-      } catch (error) {
-        toast.error("Erro ao carregar países");
-      }
-    };
-
-    fetchCountries();
   }, []);
 
   const handleOpenCreate = () => {
