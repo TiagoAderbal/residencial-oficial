@@ -292,12 +292,12 @@ export const deleteMedicamento = async (id: number) => {
 }
 
 // Lancamentos
-export const getLancamentos = async () => {
+export const getLancamentos = async (page = 1) => {
     return await api<APIGetLancamentos>({
-        endpoint: 'lancamentos/?page=1',
+        endpoint: `lancamentos/?page=${page}`,
         method: 'GET'
     });
-}
+};
 
 export const createLancamento = async (data: Omit<Lancamento, 'id'>) => {
     return await api<APICreateLancamento>({

@@ -9,7 +9,6 @@ import {
   updateLancamento,
   deleteLancamento
 } from "@/lib/requests";
-import { estadosBrasileiros } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +19,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { LancamentoForm } from "@/components/forms/lancamento-form";
-import { LancamentoFormValues, LancamentoAPI } from "@/lib/schemas/lancamentoSchema";
 import {
   Drawer,
   DrawerContent,
@@ -41,107 +39,211 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/store/authStore";
+import { LancamentoFormValues } from "@/lib/schemas/lancamentoSchema";
 
 type Lancamento = {
-  id: number,
-  user: number,
-  supplier: number,
-  account: number,
-  document: number,
-  plan_account: number,
-  payment_method: number,
-  number: string,
-  situation: string,
-  installment: number,
-  dueDate: string,
-  value: string,
-  fine: string,
-  discount: string,
-  amount_paid: string,
-  observation: string
+  id?: number;
+  user: {
+    id: number;
+    username: string;
+    email: string;
+    first_name: string;
+    last_name: string;
+  };
+  supplier: {
+    id: number;
+    name: string;
+    taxId: string;
+    description: string;
+    address: string;
+    number: string;
+    city: string;
+    state: string;
+    country: string;
+    phone: string;
+    mobile: string;
+  };
+  account: {
+    id: number;
+    name: string;
+    code: string;
+    description: string;
+  };
+  document: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  plan_account: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  payment_method: {
+    id: number;
+    name: string;
+    description: string;
+  };
+  number: string;
+  situation: string;
+  installment: number;
+  dueDate: string;
+  value: number;
+  fine: number;
+  discount: number;
+  amount_paid: number;
+  observation?: string;
 };
 
 export const LancamentosPage = () => {
-  const [Lancamentos, setLancamentos] = useState<Lancamento[]>([]);
+  const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
   const [currentLancamento, setCurrentLancamento] = useState<Lancamento | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [LancamentoToDelete, setLancamentoToDelete] = useState<number | null>(null);
+  const [lancamentoToDelete, setLancamentoToDelete] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
-  const [LancamentoToView, setLancamentoToView] = useState<Lancamento | null>(null);
+  const [lancamentoToView, setLancamentoToView] = useState<Lancamento | null>(null);
+  const [pagination, setPagination] = useState({
+    count: 0,
+    currentPage: 1,
+    totalPages: 1,
+  });
 
-  const { user, clearUser } = useAuthStore();
-  const currentUserId = user?.id;
+  const { user } = useAuthStore();
 
-  // Fetch Lancamentos
+  const fetchLancamentos = async (page = 1) => {
+    try {
+      setIsLoading(true);
+      const { data: response } = await getLancamentos(page);
+      setLancamentos(response?.results || []);
+
+      const totalCount = response?.count || 0;
+      setPagination({
+        count: totalCount,
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / 10), // 10 itens por página
+      });
+    } catch (error) {
+      toast.error("Erro ao carregar lançamentos");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchLancamentos = async () => {
-      try {
-        const { data: response } = await getLancamentos();
-        setLancamentos(response?.results || []);
-      } catch (error) {
-        toast.error("Erro ao carregar Lancamentos");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchLancamentos();
+    fetchLancamentos(1);
   }, []);
+
+  const getPageNumbers = () => {
+    const totalPages = pagination.totalPages;
+    const currentPage = pagination.currentPage;
+    const pageNumbers = [];
+
+    // Sempre mostra até 5 números de página
+    if (totalPages <= 5) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      // Mostra páginas próximas à atual
+      const startPage = Math.max(1, currentPage - 2);
+      const endPage = Math.min(totalPages, currentPage + 2);
+
+      if (startPage > 1) {
+        pageNumbers.push(1);
+        if (startPage > 2) {
+          pageNumbers.push('...');
+        }
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        pageNumbers.push(i);
+      }
+
+      if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+          pageNumbers.push('...');
+        }
+        pageNumbers.push(totalPages);
+      }
+    }
+
+    return pageNumbers;
+  };
 
   const handleOpenCreate = () => {
     setCurrentLancamento(null);
     setOpenDrawer(true);
   };
 
-  const handleOpenEdit = (Lancamento: Lancamento) => {
-    setCurrentLancamento(Lancamento);
+  const handleOpenEdit = (lancamento: Lancamento) => {
+    setCurrentLancamento(lancamento);
     setOpenDrawer(true);
   };
 
-  const handleSubmit = async (values: LancamentoAPI) => {
+  const handleSubmit = async (values: LancamentoFormValues) => {
     setIsSubmitting(true);
     try {
-      if (currentLancamento) {
-        const response = await updateLancamento(currentLancamento.id, values);
-        if (response.data) {
-          setLancamentos(Lancamentos.map(f =>
-            f.id === currentLancamento.id ? { ...f, ...response.data } : f
-          ));
-          toast.success("Lancamento atualizado com sucesso!");
-        }
+      const payload = {
+        user_id: user?.id,
+        supplier_id: values.supplier?.id,
+        account_id: values.account?.id,
+        document_id: values.document?.id,
+        plan_account_id: values.plan_account?.id,
+        payment_method_id: values.payment_method?.id,
+        number: values.number,
+        situation: values.situation,
+        installment: values.installment,
+        dueDate: values.dueDate,
+        value: values.value,
+        fine: values.fine,
+        discount: values.discount,
+        amount_paid: values.amount_paid,
+        observation: values.observation || null,
+      };
+
+      if (currentLancamento?.id) {
+        await updateLancamento(currentLancamento.id, payload);
+        toast.success("Lançamento atualizado com sucesso!");
       } else {
-        const { data: response } = await createLancamento(values);
-        if (response) {
-          setLancamentos([...Lancamentos, response]);
-          toast.success("Lancamento cadastrado com sucesso!");
-        }
+        await createLancamento(payload);
+        toast.success("Lançamento criado com sucesso!");
       }
+
+      // Recarrega mantendo a página atual
+      fetchLancamentos(pagination.currentPage);
       setOpenDrawer(false);
     } catch (error) {
-      toast.error(`Erro ao ${currentLancamento ? "atualizar" : "cadastrar"} Lancamento`);
+      toast.error("Erro ao salvar lançamento");
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleOpenView = (Lancamento: Lancamento) => {
-    setLancamentoToView(Lancamento);
+  const handleOpenView = (lancamento: Lancamento) => {
+    setLancamentoToView(lancamento);
     setOpenViewDrawer(true);
   };
 
   const handleDelete = async () => {
-    if (!LancamentoToDelete) return;
+    if (!lancamentoToDelete) return;
 
     try {
-      await deleteLancamento(LancamentoToDelete);
-      setLancamentos(Lancamentos.filter(f => f.id !== LancamentoToDelete));
-      toast.success("Lancamento excluído com sucesso!");
+      await deleteLancamento(lancamentoToDelete);
+      toast.success("Lançamento excluído com sucesso!");
       setOpenDeleteDialog(false);
+
+      // Verifica se estamos na última página com apenas 1 item
+      if (lancamentos.length === 1 && pagination.currentPage > 1) {
+        fetchLancamentos(pagination.currentPage - 1);
+      } else {
+        fetchLancamentos(pagination.currentPage);
+      }
     } catch (error) {
-      toast.error("Erro ao excluir Lancamento");
+      toast.error("Erro ao excluir lançamento");
     }
   };
 
@@ -149,39 +251,44 @@ export const LancamentosPage = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  const formatCurrency = (value: string) => {
-    return Number(value).toLocaleString('pt-BR', {
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
-    });
+    }).format(value);
   };
 
-  const getMonthName = (monthNumber: number): string => {
-    const months = [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
-    ];
+  const formatLancamentoForForm = (lancamento: Lancamento | null) => {
+    if (!lancamento) return undefined;
 
-    // Ajusta para array começar em 1 (janeiro = 1)
-    return months[monthNumber - 1] || `Mês ${monthNumber}`;
-  };
-
-  const convertToFormValues = (lancamento: Lancamento): Partial<LancamentoFormValues> => {
     return {
-      supplier: lancamento.supplier.toString(),
-      account: lancamento.account.toString(),
-      document: lancamento.document.toString(),
-      plan_account: lancamento.plan_account.toString(),
-      payment_method: lancamento.payment_method.toString(),
-      number: lancamento.number,
-      situation: lancamento.situation,
-      installment: lancamento.installment.toString(),
-      dueDate: new Date(lancamento.dueDate),
-      value: lancamento.value,
-      fine: lancamento.fine,
-      discount: lancamento.discount,
-      amount_paid: lancamento.amount_paid,
-      observation: lancamento.observation,
+      ...lancamento,
+      supplier: lancamento.supplier ? {
+        id: lancamento.supplier.id,
+        name: lancamento.supplier.name
+      } : null,
+      account: lancamento.account ? {
+        id: lancamento.account.id,
+        name: lancamento.account.name
+      } : null,
+      document: lancamento.document ? {
+        id: lancamento.document.id,
+        name: lancamento.document.name
+      } : null,
+      plan_account: lancamento.plan_account ? {
+        id: lancamento.plan_account.id,
+        name: lancamento.plan_account.name,
+        code: lancamento.plan_account.code
+      } : null,
+      payment_method: lancamento.payment_method ? {
+        id: lancamento.payment_method.id,
+        name: lancamento.payment_method.name
+      } : null,
+      situation: lancamento.situation as "0" | "1",
+      value: lancamento.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      fine: lancamento.fine.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      discount: lancamento.discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      amount_paid: lancamento.amount_paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
     };
   };
 
@@ -193,7 +300,7 @@ export const LancamentosPage = () => {
             <div>
               <CardTitle>Lançamentos</CardTitle>
               <CardDescription>
-                Gerencie seus lançamentos financeiros
+                Gerencie seus lançamentos cadastrados
               </CardDescription>
             </div>
             <Button onClick={handleOpenCreate}>
@@ -208,97 +315,166 @@ export const LancamentosPage = () => {
               <Loader2 className="h-8 w-8 animate-spin" />
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <div
-                className="grid bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200"
-                style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
-                <div className="truncate-cell-lanc">Fornecedor</div>
-                <div className="truncate-cell-lanc">Tipo Conta</div>
-                <div className="truncate-cell-lanc">Documento</div>
-                <div className="truncate-cell-lanc">Contábil</div>
-                <div className="truncate-cell-lanc">Pagamento</div>
-                <div className="truncate-cell-lanc">Número</div>
-                <div className="truncate-cell-lanc">Situação</div>
-                <div className="truncate-cell-lanc">Mês Lançamento</div>
-                <div className="truncate-cell-lanc">Vencimento</div>
-                <div className="truncate-cell-lanc">Valor</div>
-                <div className="truncate-cell-lanc">Multa/Juros</div>
-                <div className="truncate-cell-lanc">Desconto</div>
-                <div className="truncate-cell-lanc">Valor Pago</div>
-                <div className="truncate-cell-lanc">Ações</div>
-              </div>
-              {Lancamentos.map((Lancamento) => (
-                <div key={Lancamento.id} className="grid p-4 border-t items-center text-sm" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
-                  <div className="truncate-cell-lanc">{Lancamento.supplier}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.account}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.document}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.plan_account}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.payment_method}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.number}</div>
-                  <div className="truncate-cell-lanc">{Lancamento.situation}</div>
-                  <div className="truncate-cell-lanc">{getMonthName(Lancamento.installment)}</div>
-                  <div className="truncate-cell-lanc">{formatDate(Lancamento.dueDate)}</div>
-                  <div className="truncate-cell-lanc">{formatCurrency(Lancamento.value)}</div>
-                  <div className="truncate-cell-lanc">{formatCurrency(Lancamento.fine)}</div>
-                  <div className="truncate-cell-lanc">{formatCurrency(Lancamento.discount)}</div>
-                  <div className="truncate-cell-lanc">{formatCurrency(Lancamento.amount_paid)}</div>
-                  <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleOpenView(Lancamento)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleOpenEdit(Lancamento)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => {
-                        setLancamentoToDelete(Lancamento.id);
-                        setOpenDeleteDialog(true);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+            <>
+              <div className="border rounded-lg overflow-hidden">
+                <div
+                  className="grid bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200"
+                  style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
+                  <div className="truncate-cell-lanc">Fornecedor</div>
+                  <div className="truncate-cell-lanc">Tipo Conta</div>
+                  <div className="truncate-cell-lanc">Documento</div>
+                  <div className="truncate-cell-lanc">Contábil</div>
+                  <div className="truncate-cell-lanc">Pagamento</div>
+                  <div className="truncate-cell-lanc">Número</div>
+                  <div className="truncate-cell-lanc">Situação</div>
+                  <div className="truncate-cell-lanc">Qtd Parcelas</div>
+                  <div className="truncate-cell-lanc">Vencimento</div>
+                  <div className="truncate-cell-lanc">Valor</div>
+                  <div className="truncate-cell-lanc">Multa/Juros</div>
+                  <div className="truncate-cell-lanc">Desconto</div>
+                  <div className="truncate-cell-lanc">Valor Pago</div>
+                  <div className="truncate-cell-lanc">Ações</div>
                 </div>
-              ))}
-            </div>
+                {lancamentos.map((lancamento) => (
+                  <div key={lancamento.id} className="grid grid-cols-10 p-4 border-t items-center text-sm" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
+                    <div className="truncate-cell-lanc">{lancamento.supplier?.name}</div>
+                    <div className="truncate-cell-lanc">{lancamento.account?.name}</div>
+                    <div className="truncate-cell-lanc">{lancamento.document?.name}</div>
+                    <div className="truncate-cell-lanc">{lancamento.plan_account?.name}</div>
+                    <div className="truncate-cell-lanc">{lancamento.payment_method?.name}</div>
+                    <div className="truncate-cell-lanc">{lancamento.number}</div>
+                    <div className="truncate-cell-lanc">{lancamento.situation === "0" ? "Pendente" : "Pago"}</div>
+                    <div className="truncate-cell-lanc">{lancamento.installment} {lancamento.installment === 1 ? 'Parcela' : 'Parcelas'}</div>
+                    <div className="truncate-cell-lanc">{formatDate(lancamento.dueDate)}</div>
+                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.value)}</div>
+                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.fine)}</div>
+                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.discount)}</div>
+                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.amount_paid)}</div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleOpenView(lancamento)}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleOpenEdit(lancamento)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => {
+                          if (lancamento.id) {
+                            setLancamentoToDelete(lancamento.id);
+                            setOpenDeleteDialog(true);
+                          }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Paginação simplificada */}
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-muted-foreground">
+                  Total: {pagination.count} lançamentos • Página {pagination.currentPage} de {pagination.totalPages}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLancamentos(1)}
+                    disabled={pagination.currentPage === 1}
+                  >
+                    «
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLancamentos(pagination.currentPage - 1)}
+                    disabled={pagination.currentPage === 1}
+                  >
+                    Anterior
+                  </Button>
+
+                  {getPageNumbers().map((pageNum, index) => (
+                    pageNum === '...' ? (
+                      <Button
+                        key={`ellipsis-${index}`}
+                        variant="outline"
+                        size="sm"
+                        disabled
+                        className="cursor-default"
+                      >
+                        ...
+                      </Button>
+                    ) : (
+                      <Button
+                        key={pageNum}
+                        variant={pageNum === pagination.currentPage ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => fetchLancamentos(Number(pageNum))}
+                      >
+                        {pageNum}
+                      </Button>
+                    )
+                  ))}
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLancamentos(pagination.currentPage + 1)}
+                    disabled={pagination.currentPage >= pagination.totalPages}
+                  >
+                    Próxima
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => fetchLancamentos(pagination.totalPages)}
+                    disabled={pagination.currentPage >= pagination.totalPages}
+                  >
+                    »
+                  </Button>
+                </div>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
 
-      {/* Drawer para visuzliacao */}
       <Drawer open={openViewDrawer} onOpenChange={setOpenViewDrawer}>
         <DrawerContent className="max-h-[90vh] p-8">
           <DrawerHeader>
             <DrawerTitle>Visualizar Lançamento</DrawerTitle>
             <DrawerDescription>
-              Detalhes completos do Lançamento #{LancamentoToView?.id}
+              Detalhes completos do lançamento
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
-            {LancamentoToView && (
+            {lancamentoToView && (
               <div className="space-y-6">
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Fornecedor</label>
-                      <Input
-                        value={LancamentoToView.supplier}
-                        readOnly
-                      />
+                      <Input value={lancamentoToView.supplier?.name} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Tipo de Conta</label>
-                      <Input value={`Conta #${LancamentoToView.account}`} readOnly />
+                      <Input value={`${lancamentoToView.account?.name}`} readOnly />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Lançado por</label>
+                      <Input value={`${lancamentoToView.user?.first_name || ''} ${lancamentoToView.user?.last_name || ''}`.trim()} readOnly />
                     </div>
                   </div>
                 </div>
@@ -307,28 +483,27 @@ export const LancamentosPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Número</label>
-                      <Input value={LancamentoToView.number || "Não informado"} readOnly />
+                      <Input value={lancamentoToView.number || "Não informado"} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Situação</label>
                       <Input
-                        value={LancamentoToView.situation === "0" ? "Pendente" : "Pago"}
+                        value={lancamentoToView.situation === "0" ? "Pendente" : "Pago"}
                         readOnly
                       />
                     </div>
                   </div>
                 </div>
 
-
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Mês de Lançamento</label>
-                      <Input value={getMonthName(LancamentoToView.installment)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Parcela</label>
+                      <Input value={`${lancamentoToView.installment} ${lancamentoToView.installment === 1 ? 'Parcela' : 'Parcelas'}`} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Data de Vencimento</label>
-                      <Input value={formatDate(LancamentoToView.dueDate)} readOnly />
+                      <Input value={formatDate(lancamentoToView.dueDate)} readOnly />
                     </div>
                   </div>
                 </div>
@@ -337,29 +512,26 @@ export const LancamentosPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Valor Original</label>
-                      <Input value={formatCurrency(LancamentoToView.value)} readOnly />
+                      <Input value={formatCurrency(lancamentoToView.value)} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Multa</label>
-                      <Input value={formatCurrency(LancamentoToView.fine)} readOnly />
+                      <Input value={formatCurrency(lancamentoToView.fine)} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Desconto</label>
-                      <Input value={formatCurrency(LancamentoToView.discount)} readOnly />
+                      <Input value={formatCurrency(lancamentoToView.discount)} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">Valor Total Pago</label>
-                      <Input value={formatCurrency(LancamentoToView.amount_paid)} readOnly />
+                      <Input value={formatCurrency(lancamentoToView.amount_paid)} readOnly />
                     </div>
                   </div>
-                </div>
-
-                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1 text-muted-foreground">Observações</label>
                     <textarea
                       className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                      value={LancamentoToView.observation || "Nenhuma observação registrada"}
+                      value={lancamentoToView.observation || "Nenhuma observação registrada"}
                       readOnly
                     />
                   </div>
@@ -375,7 +547,6 @@ export const LancamentosPage = () => {
         </DrawerContent>
       </Drawer>
 
-      {/* Drawer para criação/edição */}
       <Drawer open={openDrawer} onOpenChange={setOpenDrawer}>
         <DrawerContent className="max-h-[90vh] p-8">
           <DrawerHeader>
@@ -391,22 +562,20 @@ export const LancamentosPage = () => {
           <div className="p-4 overflow-y-auto">
             <LancamentoForm
               onSubmit={handleSubmit}
-              defaultValues={currentLancamento ? convertToFormValues(currentLancamento) : undefined}
+              defaultValues={formatLancamentoForForm(currentLancamento)}
               loading={isSubmitting}
               onCancel={() => setOpenDrawer(false)}
-              currentUserId={currentUserId} // Passe o user ID
             />
           </div>
         </DrawerContent>
       </Drawer>
 
-      {/* Dialog de confirmação para exclusão */}
       <AlertDialog open={openDeleteDialog} onOpenChange={setOpenDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este Lancamento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
