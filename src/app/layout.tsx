@@ -10,11 +10,11 @@ const nunito = Nunito({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: {
-    template: "%s | GRF Talk",
-    default: "Home | GRF Talk",
+    template: "%s | D Clarice",
+    default: "Home | D Clarice",
   },
   icons: {
-    icon: "/grftalk.png",
+    icon: "/fav.png",
   },
 };
 

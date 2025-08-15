@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInData, signInSchema } from "@/lib/schemas/authSchema";
-import { handleSignIn } from "@/lib/server/auth";
+import { handleGetUser, handleSignIn } from "@/lib/server/auth";
 import { useAuthStore } from "@/store/authStore";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
@@ -26,9 +26,11 @@ import {
 import { Button } from "../ui/button";
 import { Skeleton } from "../ui/skeleton";
 import { Input } from "../ui/input";
+import { Eye, EyeOff } from "lucide-react";
 
 export const SignInPage = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const setUser = useAuthStore((state) => state.setUser);
   const router = useRouter();
@@ -36,7 +38,7 @@ export const SignInPage = () => {
   const form = useForm<SignInData>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: "",
+      username: "",
       password: "",
     },
   });
@@ -52,7 +54,11 @@ export const SignInPage = () => {
       return;
     }
 
-    setUser(response.data.user);
+
+    const getUser = await handleGetUser();
+    if (getUser) {
+      setUser(getUser);
+    }
     toast.success("Autenticado com sucesso!", { position: "top-center" });
 
     // Redirect to home
@@ -83,13 +89,13 @@ export const SignInPage = () => {
                   <>
                     <FormField
                       control={form.control}
-                      name="email"
+                      name="username"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel>Usuário</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Ex: joao2000@gmail.com"
+                              placeholder="Digite seu usuário"
                               {...field}
                             />
                           </FormControl>
@@ -105,7 +111,29 @@ export const SignInPage = () => {
                         <FormItem>
                           <FormLabel>Senha</FormLabel>
                           <FormControl>
-                            <Input placeholder="Ex: 123456" {...field} />
+                            <div className="relative">
+                              <Input
+                                placeholder="Senha"
+                                type={showPassword ? "text" : "password"}
+                                {...field}
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                onClick={() => setShowPassword(!showPassword)}
+                              >
+                                {showPassword ? (
+                                  <EyeOff className="h-4 w-4" />
+                                ) : (
+                                  <Eye className="h-4 w-4" />
+                                )}
+                                <span className="sr-only">
+                                  {showPassword ? "Esconder senha" : "Mostrar senha"}
+                                </span>
+                              </Button>
+                            </div>
                           </FormControl>
                           <FormMessage />
                         </FormItem>

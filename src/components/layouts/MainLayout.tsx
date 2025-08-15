@@ -1,14 +1,12 @@
 "use client";
 
 import { useAuthStore } from "@/store/authStore";
-import { useChatStore } from "@/store/chatStore";
 import { User } from "@/types/User";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Header } from "./Header";
 import { BarLoader } from "react-spinners";
 import { LeftSide } from "./Leftside";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 type Props = {
   user: User | null;
@@ -17,7 +15,7 @@ type Props = {
 
 export const MainLayout = ({ user, children }: Props) => {
   const auth = useAuthStore();
-  const { showChatsList, setShowChatsList } = useChatStore();
+  console.log("auth é: ", auth);
 
   const [loading, setLoading] = useState(true);
 
@@ -51,11 +49,6 @@ export const MainLayout = ({ user, children }: Props) => {
         <div className="flex-1">{children}</div>
       )}
 
-      <Sheet open={showChatsList} onOpenChange={setShowChatsList}>
-        <SheetContent className="p-0 bg-slate-100 dark:bg-slate-900">
-          <LeftSide variant="mobile" />
-        </SheetContent>
-      </Sheet>
     </div>
   );
 };
