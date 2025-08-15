@@ -1,5 +1,6 @@
 import { handleSignOut } from "@/lib/server/auth";
 import { useAuthStore } from "@/store/authStore";
+import { useChatStore } from "@/store/chatStore";
 import { useTheme } from "next-themes";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -22,11 +23,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 export const Header = () => {
   const { setTheme } = useTheme();
   const { user, clearUser } = useAuthStore();
+  const { setChat, showChatsList, setShowChatsList } = useChatStore();
 
   const pathname = usePathname();
 
   const handleLogOut = () => {
     handleSignOut();
+    setChat(null);
     clearUser();
     toast.success("Deslogado com sucesso!", { position: "top-center" });
   };
@@ -58,7 +61,6 @@ export const Header = () => {
         </div>
 
         <div className="flex items-center gap-6 pr-4">
-
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon">
@@ -113,6 +115,20 @@ export const Header = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          )}
+
+          {!user && pathname.startsWith("/auth") && (
+            <div>
+              {pathname !== "/auth/signin" ? (
+                <Button size="sm" asChild>
+                  <Link href="/auth/signin">Entrar</Link>
+                </Button>
+              ) : (
+                <Button size="sm" asChild>
+                  <Link href="/auth/signup">Registrar-se</Link>
+                </Button>
+              )}
+            </div>
           )}
         </div>
       </nav>
