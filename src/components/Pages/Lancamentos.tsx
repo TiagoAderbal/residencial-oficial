@@ -318,14 +318,10 @@ export const LancamentosPage = () => {
             <>
               <div className="border rounded-lg overflow-hidden">
                 <div
-                  className="grid bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200"
-                  style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
+                  className="grid grid-cols-11 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
                   <div className="truncate-cell-lanc">Fornecedor</div>
-                  <div className="truncate-cell-lanc">Tipo Conta</div>
-                  <div className="truncate-cell-lanc">Documento</div>
                   <div className="truncate-cell-lanc">Contábil</div>
                   <div className="truncate-cell-lanc">Pagamento</div>
-                  <div className="truncate-cell-lanc">Número</div>
                   <div className="truncate-cell-lanc">Situação</div>
                   <div className="truncate-cell-lanc">Qtd Parcelas</div>
                   <div className="truncate-cell-lanc">Vencimento</div>
@@ -336,13 +332,10 @@ export const LancamentosPage = () => {
                   <div className="truncate-cell-lanc">Ações</div>
                 </div>
                 {lancamentos.map((lancamento) => (
-                  <div key={lancamento.id} className="grid grid-cols-10 p-4 border-t items-center text-sm" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
+                  <div key={lancamento.id} className="grid grid-cols-11 p-4 border-t items-center text-sm">
                     <div className="truncate-cell-lanc">{lancamento.supplier?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.account?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.document?.name}</div>
                     <div className="truncate-cell-lanc">{lancamento.plan_account?.name}</div>
                     <div className="truncate-cell-lanc">{lancamento.payment_method?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.number}</div>
                     <div className="truncate-cell-lanc">{lancamento.situation === "0" ? "Pendente" : "Pago"}</div>
                     <div className="truncate-cell-lanc">{lancamento.installment} {lancamento.installment === 1 ? 'Parcela' : 'Parcelas'}</div>
                     <div className="truncate-cell-lanc">{formatDate(lancamento.dueDate)}</div>

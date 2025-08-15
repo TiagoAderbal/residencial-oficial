@@ -12,11 +12,14 @@ const currencyField = (fieldName: string) =>
     .refine(val => /^[\d.,]+$/.test(val), {
       message: `${fieldName} deve ser um valor monetário válido`
     })
-    .transform(val => {
-      // Remove todos os pontos (separadores de milhar) e substitui vírgula por ponto
+    .refine(val => {
       const cleaned = val.replace(/\./g, '').replace(',', '.');
-      // Garante que é um número válido
-      if (isNaN(Number(cleaned))) return '0';
+      return parseFloat(cleaned) > 0; // Não aceita zero
+    }, {
+      message: `${fieldName} deve ser maior que zero`
+    })
+    .transform(val => {
+      const cleaned = val.replace(/\./g, '').replace(',', '.');
       return cleaned;
     });
 

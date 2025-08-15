@@ -13,7 +13,8 @@ import {
   BadgeDollarSign,
   ClipboardList,
   Pill,
-  Landmark
+  Landmark,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +71,7 @@ export const LeftSide = () => {
       icon: <HeartHandshake className="h-4 w-4" />,
       items: [
         { title: "Medicamentos", path: "/medicamentos/", icon: <Pill className="h-4 w-4" /> },
-        { title: "Pacientes", path: "/pacientes/" },
+        { title: "Pacientes", path: "/pacientes/", icon: <Users className="h-4 w-4" /> },
         { title: "Prescrição Médica", path: "/prescricoes-medicas/" },
         { title: "Sinais Vitais", path: "/sinais-vitais/" },
         { title: "Anotações Pacientes", path: "/anotacoes-pacientes/" },
