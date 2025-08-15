@@ -173,10 +173,6 @@ export const PacientesForm = ({
         console.log(values); // Veja os dados do formulário aqui
         onSubmit(values);
       })} className="space-y-8">
-        {/* Bloco para depuração dos valores do formulário */}
-        <pre className="mt-2 w-full overflow-x-auto rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(formValues, null, 2)}</code>
-        </pre>
         {/* Seção 1: Dados Pessoais */}
         <div className=" p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4">Dados Pessoais</h3>

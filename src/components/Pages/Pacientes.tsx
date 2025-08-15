@@ -40,6 +40,7 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { Paciente } from "@/types/Pacientes";
 import { PacientesForm } from "@/components/forms/paciente-form";
+import { Textarea } from "@/components/ui/textarea";
 
 
 export const PacientesPage = () => {
@@ -358,6 +359,10 @@ export const PacientesPage = () => {
             {PacienteToView && (
               <div className="space-y-4">
                 {/* Seção 1: Dados Pessoais */}
+                <div>
+                  <label className="block text-sm font-medium mb-1 text-muted-foreground">Lançado por</label>
+                  <Input value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim()} readOnly />
+                </div>
                 <h3 className="text-lg font-semibold">Dados Pessoais</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
@@ -489,7 +494,7 @@ export const PacientesPage = () => {
                   )}
                   <div className="col-span-1 md:col-span-3">
                     <label className="block text-sm font-medium mb-1">Medicamentos em Uso</label>
-                    <textarea value={PacienteToView.medicamentos_uso} readOnly rows={3} />
+                    <Textarea value={PacienteToView.medicamentos_uso} readOnly rows={3} />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1">Alergias Medicamentosas</label>
@@ -575,7 +580,7 @@ export const PacientesPage = () => {
                   )}
                   <div className="col-span-1 md:col-span-3">
                     <label className="block text-sm font-medium mb-1">Preferências e Interesses</label>
-                    <textarea value={PacienteToView.preferencias} readOnly rows={3} />
+                    <Textarea value={PacienteToView.preferencias} readOnly rows={3} />
                   </div>
                 </div>
 

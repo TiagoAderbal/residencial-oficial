@@ -72,7 +72,7 @@ export const LeftSide = () => {
       items: [
         { title: "Medicamentos", path: "/medicamentos/", icon: <Pill className="h-4 w-4" /> },
         { title: "Pacientes", path: "/pacientes/", icon: <Users className="h-4 w-4" /> },
-        { title: "Prescrição Médica", path: "/prescricoes-medicas/" },
+        { title: "Prescrição Médica", path: "/prescricao-medica/" },
         { title: "Sinais Vitais", path: "/sinais-vitais/" },
         { title: "Anotações Pacientes", path: "/anotacoes-pacientes/" },
         { title: "Ocorrências", path: "/ocorrencias/" },

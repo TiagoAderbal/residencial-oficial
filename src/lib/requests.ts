@@ -324,12 +324,12 @@ export const deleteMedicamento = async (id: number) => {
 }
 
 // Pacientes
-export const getPacientes = async () => {
+export const getPacientes = async (page = 1) => {
   return await api<APIGetPacientes>({
-    endpoint: 'pacientes/',
+    endpoint: `pacientes/?page=${page}`,
     method: 'GET'
   });
-}
+};
 
 export const createPaciente = async (data: Omit<Paciente, 'id'>) => {
   return await api<APICreatePaciente>({
