@@ -175,7 +175,7 @@ export const PacientesPage = () => {
     orientacao_tempo: boolean;
     orientacao_espaco: boolean;
     medicamentos_uso?: string;
-    grau_dependencia: number;
+    grau_dependencia: number | 0;
     banho: string;
     vestir: string;
     banheiro: string;
