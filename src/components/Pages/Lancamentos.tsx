@@ -291,26 +291,26 @@ export const LancamentosPage = () => {
             id: lancamento.account.id,
             name: lancamento.account.name,
           }
-        : null,
+        : undefined,
       document: lancamento.document
         ? {
             id: lancamento.document.id,
             name: lancamento.document.name,
           }
-        : null,
+        : undefined,
       plan_account: lancamento.plan_account
         ? {
             id: lancamento.plan_account.id,
             name: lancamento.plan_account.name,
             code: lancamento.plan_account.code,
           }
-        : null,
+        : undefined,
       payment_method: lancamento.payment_method
         ? {
             id: lancamento.payment_method.id,
             name: lancamento.payment_method.name,
           }
-        : null,
+        : undefined,
       situation: lancamento.situation as "0" | "1",
       value: lancamento.value.toLocaleString("pt-BR", {
         minimumFractionDigits: 2,
