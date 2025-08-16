@@ -131,7 +131,9 @@ export const PacientesPage = () => {
     setOpenDrawer(true);
   };
 
-  const handleSubmit = async (values: Omit<Paciente, "id">) => {
+  const handleSubmit = async (
+    values: Omit<Paciente, "id" | "date_joined" | "updated">
+  ) => {
     if (!user) return;
 
     setIsSubmitting(true);
@@ -139,7 +141,9 @@ export const PacientesPage = () => {
       const data = {
         ...values,
         id_user: user.id,
-      };
+        date_joined: new Date().toISOString(),
+        updated: new Date().toISOString(),
+      } as Paciente;
 
       if (currentPaciente) {
         if (!currentPaciente.id) {
