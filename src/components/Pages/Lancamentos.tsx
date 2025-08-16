@@ -77,6 +77,7 @@ type Lancamento = {
   plan_account: {
     id: number;
     name: string;
+    code: string;
     description: string;
   };
   payment_method: {

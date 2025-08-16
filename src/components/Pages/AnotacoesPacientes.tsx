@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-// import { PrescricaoForm } from "@/components/forms/tipo-contas-form";
+// import { AnotacaoPacienteForm } from "@/components/forms/tipo-contas-form";
 import {
   Drawer,
   DrawerContent,
@@ -33,43 +33,46 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  getPrescricao,
-  createPrescricao,
-  updatePrescricao,
-  deletePrescricao
+  getAnotacoesPacientes,
+  createAnotacoesPacientes,
+  updateAnotacoesPacientes,
+  deleteAnotacoesPacientes
 } from "@/lib/requests";
+import { Textarea } from "../ui/textarea";
 
-type Prescricao = {
+type AnotacaoPaciente = {
   id: number;
-  id_patient: {
+  id_user: {
+    id: number;
+    first_name: string;
+    last_name: string;
+  };
+  patient: {
     id: number;
     nome_completo: string;
   };
-  id_medication: {
-    id: number;
-    name: string;
-  };
-  dosage: string;
+  ocorrencia: string;
+  data_hora: string;
 };
 
-export const PrescricaoPage = () => {
-  const [Prescricao, setPrescricao] = useState<Prescricao[]>([]);
+export const AnotacoesPage = () => {
+  const [AnotacaoPaciente, setAnotacaoPaciente] = useState<AnotacaoPaciente[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [currentPrescricao, setCurrentPrescricao] = useState<Prescricao | null>(null);
+  const [currentAnotacaoPaciente, setCurrentAnotacaoPaciente] = useState<AnotacaoPaciente | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [PrescricaoToDelete, setPrescricaoToDelete] = useState<number | null>(null);
+  const [AnotacaoPacienteToDelete, setAnotacaoPacienteToDelete] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
-  const [PrescricaoToView, setPrescricaoToView] = useState<Prescricao | null>(null);
+  const [AnotacaoPacienteToView, setAnotacaoPacienteToView] = useState<AnotacaoPaciente | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch tipo de contas
   useEffect(() => {
-    const fetchPrescricao = async () => {
+    const fetchAnotacaoPaciente = async () => {
       try {
-        const { data: response } = await getPrescricao();
-        setPrescricao(response?.results || []);
+        const { data: response } = await getAnotacoesPacientes();
+        setAnotacaoPaciente(response?.results || []);
       } catch (error) {
         toast.error("Erro ao carregar Prescrição");
       } finally {
@@ -77,16 +80,16 @@ export const PrescricaoPage = () => {
       }
     };
 
-    fetchPrescricao();
+    fetchAnotacaoPaciente();
   }, []);
 
   // const handleOpenCreate = () => {
-  //   setCurrentPrescricao(null);
+  //   setCurrentAnotacaoPaciente(null);
   //   setOpenDrawer(true);
   // };
 
-  // const handleOpenEdit = (Prescricao: Prescricao) => {
-  //   setCurrentPrescricao(Prescricao);
+  // const handleOpenEdit = (AnotacaoPaciente: AnotacaoPaciente) => {
+  //   setCurrentAnotacaoPaciente(AnotacaoPaciente);
   //   setOpenDrawer(true);
   // };
 
@@ -98,40 +101,40 @@ export const PrescricaoPage = () => {
   //       description: values.description || '', // Garante que description sempre será string
   //     };
 
-  //     if (currentPrescricao) {
-  //       const { data: response } = await updatePrescricao(currentPrescricao.id, data);
+  //     if (currentAnotacaoPaciente) {
+  //       const { data: response } = await updateAnotacoesPacientes(currentAnotacaoPaciente.id, data);
   //       if (response) {
-  //         setPrescricao(Prescricao.map(t =>
-  //           t.id === currentPrescricao.id ? { ...t, ...response } : t
+  //         setAnotacaoPaciente(AnotacaoPaciente.map(t =>
+  //           t.id === currentAnotacaoPaciente.id ? { ...t, ...response } : t
   //         ));
   //         toast.success("Tipo de conta atualizado com sucesso!");
   //       }
   //     } else {
-  //       const { data: response } = await createPrescricao(data);
+  //       const { data: response } = await createAnotacoesPacientes(data);
   //       if (response) {
-  //         setPrescricao([...Prescricao, response]);
+  //         setAnotacaoPaciente([...AnotacaoPaciente, response]);
   //         toast.success("Tipo de conta cadastrado com sucesso!");
   //       }
   //     }
   //     setOpenDrawer(false);
   //   } catch (error) {
-  //     toast.error(`Erro ao ${currentPrescricao ? "atualizar" : "cadastrar"} tipo de conta`);
+  //     toast.error(`Erro ao ${currentAnotacaoPaciente ? "atualizar" : "cadastrar"} tipo de conta`);
   //   } finally {
   //     setIsSubmitting(false);
   //   }
   // };
 
-  const handleOpenView = (Prescricao: Prescricao) => {
-    setPrescricaoToView(Prescricao);
+  const handleOpenView = (AnotacaoPaciente: AnotacaoPaciente) => {
+    setAnotacaoPacienteToView(AnotacaoPaciente);
     setOpenViewDrawer(true);
   };
 
   // const handleDelete = async () => {
-  //   if (!PrescricaoToDelete) return;
+  //   if (!AnotacaoPacienteToDelete) return;
 
   //   try {
-  //     await deletePrescricao(PrescricaoToDelete);
-  //     setPrescricao(Prescricao.filter(t => t.id !== PrescricaoToDelete));
+  //     await deleteAnotacoesPacientes(AnotacaoPacienteToDelete);
+  //     setAnotacaoPaciente(AnotacaoPaciente.filter(t => t.id !== AnotacaoPacienteToDelete));
   //     toast.success("Tipo de conta excluído com sucesso!");
   //     setOpenDeleteDialog(false);
   //   } catch (error) {
@@ -139,11 +142,23 @@ export const PrescricaoPage = () => {
   //   }
   // };
 
-  const filteredPrescricao = Prescricao.filter(prescricao => {
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    };
+
+    return new Date(dateString).toLocaleString('pt-BR', options);
+  };
+
+  const filteredAnotacaoPaciente = AnotacaoPaciente.filter(AnotacaoPaciente => {
     const searchLower = searchTerm.toLowerCase();
     return (
-      prescricao.id_patient?.nome_completo.toLowerCase().includes(searchLower) ||
-      prescricao.id_medication?.name.toLowerCase().includes(searchLower)
+      AnotacaoPaciente.patient?.nome_completo.toLowerCase().includes(searchLower)
     );
   });
 
@@ -153,9 +168,9 @@ export const PrescricaoPage = () => {
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
-              <CardTitle>Prescrições Médicas</CardTitle>
+              <CardTitle>Anotações dos Pacientes</CardTitle>
               <CardDescription>
-                Gerencie as prescrições médicas dos pacientes
+                Gerencie as anotações dos pacientes
               </CardDescription>
             </div>
             <Button
@@ -183,27 +198,27 @@ export const PrescricaoPage = () => {
             <div className="border rounded-lg overflow-hidden">
               <div className="grid grid-cols-4 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200 border-b border-slate-200 dark:border-slate-700">
                 <div>Nome Paciente</div>
-                <div>Medicamento</div>
-                <div>Dosagem</div>
+                <div>Ocorrência</div>
+                <div>Data e Hora</div>
                 <div className="text-left">Ações</div>
               </div>
-              {filteredPrescricao.map((Prescricao) => (
-                <div key={Prescricao.id} className="grid grid-cols-4 p-4 border-t items-center text-sm">
-                  <div>{Prescricao.id_patient?.nome_completo}</div>
-                  <div>{Prescricao.id_medication?.name}</div>
-                  <div>{Prescricao.dosage || '-'}</div>
+              {AnotacaoPaciente.map((AnotacaoPaciente) => (
+                <div key={AnotacaoPaciente.id} className="grid grid-cols-4 p-4 border-t items-center text-sm">
+                  <div className="truncate-cell">{AnotacaoPaciente.patient?.nome_completo}</div>
+                  <div className="truncate-cell">{AnotacaoPaciente.ocorrencia}</div>
+                  <div className="truncate-cell">{formatDate(AnotacaoPaciente.data_hora)}</div>
                   <div className="flex gap-2 justify-start">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleOpenView(Prescricao)}
+                      onClick={() => handleOpenView(AnotacaoPaciente)}
                     >
                       <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
-                    // onClick={() => handleOpenEdit(Prescricao)}
+                    // onClick={() => handleOpenEdit(AnotacaoPaciente)}
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
@@ -211,7 +226,7 @@ export const PrescricaoPage = () => {
                       variant="destructive"
                       size="icon"
                     // onClick={() => {
-                    //   setPrescricaoToDelete(Prescricao.id);
+                    //   setAnotacaoPacienteToDelete(AnotacaoPaciente.id);
                     //   setOpenDeleteDialog(true);
                     // }}
                     >
@@ -235,24 +250,28 @@ export const PrescricaoPage = () => {
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
-            {PrescricaoToView && (
+            {AnotacaoPacienteToView && (
               <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Nome Paciente</label>
-                    <Input value={PrescricaoToView.id_patient?.nome_completo} readOnly />
+                    <Input value={AnotacaoPacienteToView.patient?.nome_completo} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Medicação</label>
-                    <Input value={PrescricaoToView.id_medication?.name} readOnly />
+                    <label className="block text-sm font-medium mb-1">Lançado por</label>
+                    <Input value={AnotacaoPacienteToView.id_user?.first_name + ' ' + AnotacaoPacienteToView.id_user?.last_name} readOnly />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Data e Hora de Lançamento</label>
+                    <Input value={formatDate(AnotacaoPacienteToView.data_hora)} readOnly />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Dosagem</label>
-                    <Input
-                      value={PrescricaoToView.dosage || '-'}
+                    <label className="block text-sm font-medium mb-1">Ocorrência</label>
+                    <Textarea
+                      value={AnotacaoPacienteToView.ocorrencia || '-'}
                       readOnly
                     />
                   </div>
@@ -273,18 +292,18 @@ export const PrescricaoPage = () => {
         <DrawerContent className="max-h-[90vh] p-8">
           <DrawerHeader>
             <DrawerTitle>
-              {currentPrescricao ? "Editar Tipo de Conta" : "Novo Tipo de Conta"}
+              {currentAnotacaoPaciente ? "Editar Tipo de Conta" : "Novo Tipo de Conta"}
             </DrawerTitle>
             <DrawerDescription>
-              {currentPrescricao
+              {currentAnotacaoPaciente
                 ? "Atualize as informações do tipo de conta"
                 : "Preencha os campos para cadastrar um novo tipo de conta"}
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
-            <PrescricaoForm
+            <AnotacaoPacienteForm
               onSubmit={handleSubmit}
-              defaultValues={currentPrescricao || undefined}
+              defaultValues={currentAnotacaoPaciente || undefined}
               loading={isSubmitting}
               onCancel={() => setOpenDrawer(false)}
             />

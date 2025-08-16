@@ -1,4 +1,3 @@
-// src/types/Fornecedor.ts
 export type Fornecedor = {
   id: number;
   name: string;
