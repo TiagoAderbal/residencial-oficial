@@ -19,7 +19,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { lancamentoSchema, LancamentoFormValues } from "@/lib/schemas/lancamentoSchema";
+import {
+  lancamentoSchema,
+  LancamentoFormValues,
+} from "@/lib/schemas/lancamentoSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Select,
@@ -98,28 +101,28 @@ export const LancamentoForm = ({
   }, []);
 
   useEffect(() => {
-    const value = parseCurrencyToFloat(form.getValues('value') || '0');
-    const fine = parseCurrencyToFloat(form.getValues('fine') || '0');
-    const discount = parseCurrencyToFloat(form.getValues('discount') || '0');
+    const value = parseCurrencyToFloat(form.getValues("value") || "0");
+    const fine = parseCurrencyToFloat(form.getValues("fine") || "0");
+    const discount = parseCurrencyToFloat(form.getValues("discount") || "0");
 
-    const total = (value + fine) - discount;
+    const total = value + fine - discount;
     const formattedTotal = formatDefaultValue(total);
 
-    form.setValue('amount_paid', formattedTotal);
-  }, [form.watch('value'), form.watch('fine'), form.watch('discount')]);
+    form.setValue("amount_paid", formattedTotal);
+  }, [form.watch("value"), form.watch("fine"), form.watch("discount")]);
 
   const formatCurrency = (value: string) => {
     // Remove todos os caracteres não numéricos
-    let onlyNumbers = value.replace(/\D/g, '');
+    let onlyNumbers = value.replace(/\D/g, "");
 
     // Remove zeros à esquerda
-    onlyNumbers = onlyNumbers.replace(/^0+/, '');
+    onlyNumbers = onlyNumbers.replace(/^0+/, "");
 
     // Se ficou vazio, retorna "0,00"
-    if (onlyNumbers === '') return '0,00';
+    if (onlyNumbers === "") return "0,00";
 
     // Garante duas casas decimais
-    onlyNumbers = onlyNumbers.padStart(3, '0');
+    onlyNumbers = onlyNumbers.padStart(3, "0");
 
     // Separa parte inteira e decimal
     const integerPart = onlyNumbers.slice(0, -2);
@@ -127,14 +130,14 @@ export const LancamentoForm = ({
 
     // Formata parte inteira com separadores de milhar
     const formattedInteger = integerPart
-      .split('')
+      .split("")
       .reverse()
-      .join('')
-      .replace(/(\d{3})(?=\d)/g, '$1.')
-      .split('')
+      .join("")
+      .replace(/(\d{3})(?=\d)/g, "$1.")
+      .split("")
       .reverse()
-      .join('')
-      .replace(/^\./, '');
+      .join("")
+      .replace(/^\./, "");
 
     return `${formattedInteger},${decimalPart}`;
   };
@@ -146,15 +149,17 @@ export const LancamentoForm = ({
   };
 
   const parseCurrencyToFloat = (value: string) => {
-    return parseFloat(value.replace(/\./g, '').replace(',', '.'));
+    return parseFloat(value.replace(/\./g, "").replace(",", "."));
   };
 
   // Função para formatar valores padrão
   const formatDefaultValue = (value: number | undefined) => {
-    return value ? value.toLocaleString('pt-BR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }) : "0,00";
+    return value
+      ? value.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : "0,00";
   };
 
   return (
@@ -169,7 +174,9 @@ export const LancamentoForm = ({
                 <FormLabel>Fornecedor *</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    const selected = fornecedores.find(f => f.id === parseInt(value));
+                    const selected = fornecedores.find(
+                      (f) => f.id === parseInt(value)
+                    );
                     field.onChange(selected);
                   }}
                   value={field.value?.id?.toString() || ""}
@@ -181,7 +188,10 @@ export const LancamentoForm = ({
                   </FormControl>
                   <SelectContent>
                     {fornecedores.map((fornecedor) => (
-                      <SelectItem key={fornecedor.id} value={fornecedor.id.toString()}>
+                      <SelectItem
+                        key={fornecedor.id}
+                        value={fornecedor.id.toString()}
+                      >
                         {fornecedor.name}
                       </SelectItem>
                     ))}
@@ -200,7 +210,9 @@ export const LancamentoForm = ({
                 <FormLabel>Tipo de Conta *</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    const selected = tipoContas.find(t => t.id === parseInt(value));
+                    const selected = tipoContas.find(
+                      (t) => t.id === parseInt(value)
+                    );
                     field.onChange(selected);
                   }}
                   value={field.value?.id?.toString() || ""}
@@ -233,7 +245,9 @@ export const LancamentoForm = ({
                 <FormLabel>Tipo de Documento *</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    const selected = tipoDocumentos.find(d => d.id === parseInt(value));
+                    const selected = tipoDocumentos.find(
+                      (d) => d.id === parseInt(value)
+                    );
                     field.onChange(selected);
                   }}
                   value={field.value?.id?.toString() || ""}
@@ -245,7 +259,10 @@ export const LancamentoForm = ({
                   </FormControl>
                   <SelectContent>
                     {tipoDocumentos.map((documento) => (
-                      <SelectItem key={documento.id} value={documento.id.toString()}>
+                      <SelectItem
+                        key={documento.id}
+                        value={documento.id.toString()}
+                      >
                         {documento.name}
                       </SelectItem>
                     ))}
@@ -325,7 +342,9 @@ export const LancamentoForm = ({
                 <FormLabel>Forma de Pagamento *</FormLabel>
                 <Select
                   onValueChange={(value) => {
-                    const selected = formaPagamentos.find(f => f.id === parseInt(value));
+                    const selected = formaPagamentos.find(
+                      (f) => f.id === parseInt(value)
+                    );
                     field.onChange(selected);
                   }}
                   value={field.value?.id?.toString() || ""}
@@ -402,11 +421,13 @@ export const LancamentoForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
-                      <SelectItem key={month} value={month.toString()}>
-                        {month} {month === 1 ? 'Parcela' : 'Parcelas'}
-                      </SelectItem>
-                    ))}
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map(
+                      (month) => (
+                        <SelectItem key={month} value={month.toString()}>
+                          {month} {month === 1 ? "Parcela" : "Parcelas"}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -439,7 +460,9 @@ export const LancamentoForm = ({
                 <FormControl>
                   <Input
                     value={field.value}
-                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
+                    onChange={(e) =>
+                      handleCurrencyChange(field, e.target.value)
+                    }
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -461,7 +484,9 @@ export const LancamentoForm = ({
                 <FormControl>
                   <Input
                     value={field.value}
-                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
+                    onChange={(e) =>
+                      handleCurrencyChange(field, e.target.value)
+                    }
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -483,7 +508,9 @@ export const LancamentoForm = ({
                 <FormControl>
                   <Input
                     value={field.value}
-                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
+                    onChange={(e) =>
+                      handleCurrencyChange(field, e.target.value)
+                    }
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -522,10 +549,7 @@ export const LancamentoForm = ({
             <FormItem>
               <FormLabel>Observações</FormLabel>
               <FormControl>
-                <Textarea
-                  className="min-h-[100px]"
-                  {...field}
-                />
+                <Textarea className="min-h-[100px]" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -533,11 +557,7 @@ export const LancamentoForm = ({
         />
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button
-            variant="outline"
-            type="button"
-            onClick={onCancel}
-          >
+          <Button variant="outline" type="button" onClick={onCancel}>
             Cancelar
           </Button>
           <Button type="submit" disabled={loading}>
