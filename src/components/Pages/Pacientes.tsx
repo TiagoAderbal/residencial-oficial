@@ -162,10 +162,10 @@ export const PacientesPage = () => {
     receituario_medico: string;
     carteira_vacinacao: boolean;
     situacao_vacinal: string;
-    vacina_covid_1?: string;
-    vacina_covid_2?: string;
-    vacina_covid_3?: string;
-    vacina_covid_4?: string;
+    vacina_covid_1?: string | null;
+    vacina_covid_2?: string | null;
+    vacina_covid_3?: string | null;
+    vacina_covid_4?: string | null;
     alergias_medicamentosas: boolean;
     quais_alergias?: string;
     tabagista: boolean;
