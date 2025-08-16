@@ -14,7 +14,10 @@ import {
   ClipboardList,
   Pill,
   Landmark,
-  Users
+  Users,
+  ClipboardPen,
+  Stethoscope,
+  NotebookPen
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,9 +75,9 @@ export const LeftSide = () => {
       items: [
         { title: "Medicamentos", path: "/medicamentos/", icon: <Pill className="h-4 w-4" /> },
         { title: "Pacientes", path: "/pacientes/", icon: <Users className="h-4 w-4" /> },
-        { title: "Prescrição Médica", path: "/prescricao-medica/" },
-        { title: "Sinais Vitais", path: "/sinais-vitais/" },
-        { title: "Anotações Pacientes", path: "/anotacoes-pacientes/" },
+        { title: "Prescrição Médica", path: "/prescricao-medica/", icon: <ClipboardPen className="h-4 w-4" /> },
+        { title: "Sinais Vitais", path: "/sinais-vitais/", icon: <Stethoscope className="h-4 w-4" /> },
+        { title: "Anotações Pacientes", path: "/anotacoes-pacientes/", icon: <NotebookPen className="h-4 w-4" /> },
         { title: "Ocorrências", path: "/ocorrencias/" },
         { title: "Controle Medicações", path: "/controle-medicacoes/" }
       ],

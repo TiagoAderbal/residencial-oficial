@@ -64,6 +64,7 @@ export const FornecedoresPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
   const [fornecedorToView, setFornecedorToView] = useState<Fornecedor | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch fornecedores
   useEffect(() => {
@@ -137,6 +138,10 @@ export const FornecedoresPage = () => {
     }
   };
 
+  const filteredFornecedores = fornecedores.filter(fornecedor =>
+    fornecedor.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <main className="h-app p-6 overflow-auto">
       <Card className="border border-slate-200 dark:border-slate-800">
@@ -155,6 +160,14 @@ export const FornecedoresPage = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Input
+              placeholder="Buscar nome do paciente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
           {isLoading ? (
             <div className="flex justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -173,7 +186,7 @@ export const FornecedoresPage = () => {
                 <div>Identificador</div>
                 <div>Ações</div>
               </div>
-              {fornecedores.map((fornecedor) => (
+              {filteredFornecedores.map((fornecedor) => (
                 <div key={fornecedor.id} className="grid grid-cols-10 p-4 border-t items-center text-sm">
                   <div className="truncate-cell">{fornecedor.name}</div>
                   <div className="truncate-cell">{fornecedor.taxId}</div>

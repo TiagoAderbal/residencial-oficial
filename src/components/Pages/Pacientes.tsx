@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Eye, Edit } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye, Edit, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,6 +54,7 @@ export const PacientesPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
   const [PacienteToView, setPacienteToView] = useState<Paciente | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState({
     count: 0,
     currentPage: 1,
@@ -203,7 +204,11 @@ export const PacientesPage = () => {
       idade--;
     }
     return idade;
-  }
+  };
+
+  const filteredPacientes = Pacientes.filter(paciente =>
+    paciente.nome_completo.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <main className="h-app p-6 overflow-auto">
@@ -223,6 +228,14 @@ export const PacientesPage = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Input
+              placeholder="Buscar nome do paciente..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
           {isLoading ? (
             <div className="flex justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -238,7 +251,7 @@ export const PacientesPage = () => {
                   <div>Telefone Responsável</div>
                   <div className="text-left">Ações</div>
                 </div>
-                {Pacientes.map((paciente) => (
+                {filteredPacientes.map((paciente) => (
                   <div key={paciente.id} className="grid grid-cols-6 p-4 border-t items-center text-sm">
                     <div className="truncate-cell">{paciente.nome_completo}</div>
                     <div className="truncate-cell">{new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}</div>

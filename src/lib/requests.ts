@@ -11,6 +11,9 @@ import { TipoLancamento, APIGetTipoLancamentos, APICreateTipoLancamento, APIUpda
 import { Medicamento, APIGetMedicamentos, APICreateMedicamento, APIUpdateMedicamento, APIDeleteMedicamento } from "@/types/Medicamentos";
 import { Lancamento, APIGetLancamentos, APICreateLancamento, APIUpdateLancamento, APIDeleteLancamento } from "@/types/Lancamentos";
 import { Paciente, APIGetPacientes, APICreatePaciente, APIUpdatePaciente, APIDeletePaciente } from "@/types/Pacientes";
+import { Prescricao, APIGetPrescricao, APICreatePrescricao, APIUpdatePrescricao, APIDeletePrescricao } from "@/types/Prescricao";
+import { SinaisVitais, APIGetSinaisVitais, APICreateSinaisVitais, APIUpdateSinaisVitais, APIDeleteSinaisVitais } from "@/types/SinaisVitais";
+import { AnotacoesPacientes, APIGetAnotacoesPacientes, APICreateAnotacoesPacientes, APIUpdateAnotacoesPacientes, APIDeleteAnotacoesPacientes } from "@/types/AnotacoesPacientes";
 
 /** Auth / User */
 export const signIn = async (data: SignInData) => {
@@ -350,6 +353,99 @@ export const updatePaciente = async (id: number, data: Partial<Paciente>) => {
 export const deletePaciente = async (id: number) => {
   return await api<APIDeletePaciente>({
     endpoint: `paciente/${id}/`,
+    method: 'DELETE'
+  });
+}
+
+// Prescricao
+export const getPrescricao = async (page = 1) => {
+  return await api<APIGetPrescricao>({
+    endpoint: `prescricoes-medicas/?page=${page}`,
+    method: 'GET'
+  });
+};
+
+export const createPrescricao = async (data: Omit<Prescricao, 'id'>) => {
+  return await api<APICreatePrescricao>({
+    endpoint: 'prescricoes-medicas/',
+    method: 'POST',
+    data
+  });
+}
+
+export const updatePrescricao = async (id: number, data: Partial<Prescricao>) => {
+  return await api<APIUpdatePrescricao>({
+    endpoint: `prescricao-medica/${id}/`,
+    method: 'PUT',
+    data
+  });
+}
+
+export const deletePrescricao = async (id: number) => {
+  return await api<APIDeletePrescricao>({
+    endpoint: `prescricao-medica/${id}/`,
+    method: 'DELETE'
+  });
+}
+
+// Sinais Vitais
+export const getSinaisVitais = async (page = 1) => {
+  return await api<APIGetSinaisVitais>({
+    endpoint: `sinais-vitais/?page=${page}`,
+    method: 'GET'
+  });
+};
+
+export const createSinaisVitais = async (data: Omit<SinaisVitais, 'id'>) => {
+  return await api<APICreateSinaisVitais>({
+    endpoint: 'sinais-vitais/',
+    method: 'POST',
+    data
+  });
+}
+
+export const updateSinaisVitais = async (id: number, data: Partial<SinaisVitais>) => {
+  return await api<APIUpdateSinaisVitais>({
+    endpoint: `sinais-vitais/${id}/`,
+    method: 'PUT',
+    data
+  });
+}
+
+export const deleteSinaisVitais = async (id: number) => {
+  return await api<APIDeleteSinaisVitais>({
+    endpoint: `sinais-vitais/${id}/`,
+    method: 'DELETE'
+  });
+}
+
+// Anotacoes Pacientes
+export const getAnotacoesPacientes = async (page = 1) => {
+  return await api<APIGetAnotacoesPacientes>({
+    endpoint: `anotacoes-pacientes/?page=${page}`,
+    method: 'GET'
+  });
+};
+
+export const createAnotacoesPacientes = async (data: Omit<AnotacoesPacientes, 'id'>) => {
+  return await api<APICreateAnotacoesPacientes>({
+    endpoint: 'anotacoes-pacientes/',
+    method: 'POST',
+    data
+  });
+}
+
+export const updateAnotacoesPacientes = async (id: number, data: Partial<AnotacoesPacientes>) => {
+  return await api<APIUpdateAnotacoesPacientes>({
+    endpoint: `anotacoes-pacientes/${id}/`,
+    method: 'PUT',
+    data
+  });
+}
+
+export const deleteAnotacoesPacientes = async (id: number) => {
+  return await api<APIDeleteAnotacoesPacientes>({
+    endpoint: `anotacoes-pacientes/${id}/`,
     method: 'DELETE'
   });
 }
