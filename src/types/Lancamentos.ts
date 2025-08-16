@@ -1,4 +1,4 @@
-export type Lancamento = {
+export interface Lancamento {
   id?: number;
   user: {
     id: number;
@@ -23,6 +23,7 @@ export type Lancamento = {
   account: {
     id: number;
     name: string;
+    code: string;
     description: string;
   };
   document: {
@@ -33,6 +34,7 @@ export type Lancamento = {
   plan_account: {
     id: number;
     name: string;
+    code: string;
     description: string;
   };
   payment_method: {
@@ -40,14 +42,14 @@ export type Lancamento = {
     name: string;
     description: string;
   };
-  number?: string;
+  number: string;
   situation: string;
   installment: number;
   dueDate: string;
-  value: string;
-  fine: string;
-  discount: string;
-  amount_paid: string;
+  value: number;
+  fine: number;
+  discount: number;
+  amount_paid: number;
   observation?: string;
 };
 

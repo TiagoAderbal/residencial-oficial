@@ -60,6 +60,7 @@ export const MedicamentosPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
   const [medicamentoToView, setMedicamentoToView] = useState<Medicamento | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch medicamentos
   useEffect(() => {
@@ -146,6 +147,10 @@ export const MedicamentosPage = () => {
     }
   };
 
+  const filteredMedicamentos = medicamentos.filter(medicamento =>
+    medicamento.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <main className="h-app p-6 overflow-auto">
       <Card className="border border-slate-200 dark:border-slate-800">
@@ -164,6 +169,14 @@ export const MedicamentosPage = () => {
           </div>
         </CardHeader>
         <CardContent>
+          <div className="mb-4">
+            <Input
+              placeholder="Buscar medicamento..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
           {isLoading ? (
             <div className="flex justify-center">
               <Loader2 className="h-8 w-8 animate-spin" />
@@ -177,7 +190,7 @@ export const MedicamentosPage = () => {
                 <div>Quantidade</div>
                 <div className="text-left">Ações</div>
               </div>
-              {medicamentos.map((medicamento) => (
+              {filteredMedicamentos.map((medicamento) => (
                 <div key={medicamento.id} className="grid grid-cols-5 p-4 border-t items-center text-sm">
                   <div className="truncate-cell">{medicamento.name}</div>
                   <div className="truncate-cell">{medicamento.description || '-'}</div>
