@@ -350,7 +350,7 @@ export const createPaciente = async (data: Omit<Paciente, 'id'>) => {
   });
 }
 
-export const updatePaciente = async (id: number, data: Partial<Paciente>) => {
+export const updatePaciente = async (id: number|null, data: Partial<Paciente>) => {
   return await api<APIUpdatePaciente>({
     endpoint: `paciente/${id}/`,
     method: 'PUT',

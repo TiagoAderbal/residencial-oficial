@@ -35,13 +35,12 @@ import {
   getPacientes,
   createPaciente,
   updatePaciente,
-  deletePaciente
+  deletePaciente,
 } from "@/lib/requests";
 import { useAuthStore } from "@/store/authStore";
 import { Paciente } from "@/types/Pacientes";
 import { PacientesForm } from "@/components/forms/paciente-form";
 import { Textarea } from "@/components/ui/textarea";
-
 
 export const PacientesPage = () => {
   const { user } = useAuthStore();
@@ -103,7 +102,7 @@ export const PacientesPage = () => {
       if (startPage > 1) {
         pageNumbers.push(1);
         if (startPage > 2) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
       }
 
@@ -113,7 +112,7 @@ export const PacientesPage = () => {
 
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
         pageNumbers.push(totalPages);
       }
@@ -132,7 +131,7 @@ export const PacientesPage = () => {
     setOpenDrawer(true);
   };
 
-  const handleSubmit = async (values: Omit<Paciente, 'id'>) => {
+  const handleSubmit = async (values: Omit<Paciente, "id">) => {
     if (!user) return;
 
     setIsSubmitting(true);
@@ -143,11 +142,21 @@ export const PacientesPage = () => {
       };
 
       if (currentPaciente) {
+        if (!currentPaciente.id) {
+          toast.error("Paciente sem ID válido para atualização.");
+          return;
+        }
+
         try {
-          const { data: response } = await updatePaciente(currentPaciente.id, data);
+          const { data: response } = await updatePaciente(
+            currentPaciente.id,
+            data
+          );
           if (response) {
-            setPacientes(prev =>
-              prev.map(p => (p.id === currentPaciente.id ? { ...p, ...response } : p))
+            setPacientes((prev) =>
+              prev.map((p) =>
+                p.id === currentPaciente.id ? { ...p, ...response } : p
+              )
             );
             toast.success("Paciente atualizado com sucesso!");
           }
@@ -159,7 +168,7 @@ export const PacientesPage = () => {
         try {
           const { data: response } = await createPaciente(data);
           if (response) {
-            setPacientes(prev => [...prev, response]);
+            setPacientes((prev) => [...prev, response]);
             toast.success("Paciente cadastrado com sucesso!");
           }
         } catch (error: any) {
@@ -167,9 +176,12 @@ export const PacientesPage = () => {
           console.error(error);
         }
       }
+
       setOpenDrawer(false);
     } catch (error) {
-      toast.error(`Erro ao ${currentPaciente ? "atualizar" : "cadastrar"} Paciente`);
+      toast.error(
+        `Erro ao ${currentPaciente ? "atualizar" : "cadastrar"} Paciente`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -185,7 +197,7 @@ export const PacientesPage = () => {
 
     try {
       await deletePaciente(PacienteToDelete);
-      setPacientes(prev => prev.filter(p => p.id !== PacienteToDelete));
+      setPacientes((prev) => prev.filter((p) => p.id !== PacienteToDelete));
       toast.success("Paciente excluído com sucesso!");
       setOpenDeleteDialog(false);
     } catch (error) {
@@ -204,9 +216,9 @@ export const PacientesPage = () => {
       idade--;
     }
     return idade;
-  };
+  }
 
-  const filteredPacientes = Pacientes.filter(paciente =>
+  const filteredPacientes = Pacientes.filter((paciente) =>
     paciente.nome_completo.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -217,9 +229,7 @@ export const PacientesPage = () => {
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Pacientes</CardTitle>
-              <CardDescription>
-                Gerencie seus Pacientes
-              </CardDescription>
+              <CardDescription>Gerencie seus Pacientes</CardDescription>
             </div>
             <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
@@ -252,12 +262,25 @@ export const PacientesPage = () => {
                   <div className="text-left">Ações</div>
                 </div>
                 {filteredPacientes.map((paciente) => (
-                  <div key={paciente.id} className="grid grid-cols-6 p-4 border-t items-center text-sm">
-                    <div className="truncate-cell">{paciente.nome_completo}</div>
-                    <div className="truncate-cell">{new Date(paciente.data_nascimento).toLocaleDateString('pt-BR')}</div>
-                    <div className="truncate-cell">{calcularIdade(paciente.data_nascimento)}</div>
+                  <div
+                    key={paciente.id}
+                    className="grid grid-cols-6 p-4 border-t items-center text-sm"
+                  >
+                    <div className="truncate-cell">
+                      {paciente.nome_completo}
+                    </div>
+                    <div className="truncate-cell">
+                      {new Date(paciente.data_nascimento).toLocaleDateString(
+                        "pt-BR"
+                      )}
+                    </div>
+                    <div className="truncate-cell">
+                      {calcularIdade(paciente.data_nascimento)}
+                    </div>
                     <div className="truncate-cell">{paciente.cpf}</div>
-                    <div className="truncate-cell">{paciente.telefone_responsavel}</div>
+                    <div className="truncate-cell">
+                      {paciente.telefone_responsavel}
+                    </div>
                     <div className="flex gap-2 justify-start">
                       <Button
                         variant="outline"
@@ -293,7 +316,8 @@ export const PacientesPage = () => {
               {/* Paginação simplificada */}
               <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
-                  Total: {pagination.count} pacientes • Página {pagination.currentPage} de {pagination.totalPages}
+                  Total: {pagination.count} pacientes • Página{" "}
+                  {pagination.currentPage} de {pagination.totalPages}
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -313,8 +337,8 @@ export const PacientesPage = () => {
                     Anterior
                   </Button>
 
-                  {getPageNumbers().map((pageNum, index) => (
-                    pageNum === '...' ? (
+                  {getPageNumbers().map((pageNum, index) =>
+                    pageNum === "..." ? (
                       <Button
                         key={`ellipsis-${index}`}
                         variant="outline"
@@ -327,14 +351,18 @@ export const PacientesPage = () => {
                     ) : (
                       <Button
                         key={pageNum}
-                        variant={pageNum === pagination.currentPage ? "default" : "outline"}
+                        variant={
+                          pageNum === pagination.currentPage
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
                         onClick={() => fetchPacientes(Number(pageNum))}
                       >
                         {pageNum}
                       </Button>
                     )
-                  ))}
+                  )}
 
                   <Button
                     variant="outline"
@@ -373,37 +401,68 @@ export const PacientesPage = () => {
               <div className="space-y-4">
                 {/* Seção 1: Dados Pessoais */}
                 <div>
-                  <label className="block text-sm font-medium mb-1 text-muted-foreground">Lançado por</label>
-                  <Input value={`${user?.first_name || ''} ${user?.last_name || ''}`.trim()} readOnly />
+                  <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                    Lançado por
+                  </label>
+                  <Input
+                    value={`${user?.first_name || ""} ${
+                      user?.last_name || ""
+                    }`.trim()}
+                    readOnly
+                  />
                 </div>
                 <h3 className="text-lg font-semibold">Dados Pessoais</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Data de Avaliação</label>
-                    <Input value={new Date(PacienteToView.data_avaliacao).toLocaleDateString('pt-BR')} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Data de Avaliação
+                    </label>
+                    <Input
+                      value={new Date(
+                        PacienteToView.data_avaliacao
+                      ).toLocaleDateString("pt-BR")}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nome Completo</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Nome Completo
+                    </label>
                     <Input value={PacienteToView.nome_completo} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Data de Nascimento</label>
-                    <Input value={new Date(PacienteToView.data_nascimento).toLocaleDateString('pt-BR')} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Data de Nascimento
+                    </label>
+                    <Input
+                      value={new Date(
+                        PacienteToView.data_nascimento
+                      ).toLocaleDateString("pt-BR")}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Idade</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Idade
+                    </label>
                     <Input value={PacienteToView.idade} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Naturalidade</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Naturalidade
+                    </label>
                     <Input value={PacienteToView.naturalidade} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Estado Civil</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Estado Civil
+                    </label>
                     <Input value={PacienteToView.estado_civil} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">CPF</label>
+                    <label className="block text-sm font-medium mb-1">
+                      CPF
+                    </label>
                     <Input value={PacienteToView.cpf} readOnly />
                   </div>
                   <div>
@@ -411,362 +470,696 @@ export const PacientesPage = () => {
                     <Input value={PacienteToView.rg} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Órgão Expedidor</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Órgão Expedidor
+                    </label>
                     <Input value={PacienteToView.orgao_expedidor} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nome do Pai</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Nome do Pai
+                    </label>
                     <Input value={PacienteToView.nome_pai} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nome da Mãe</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Nome da Mãe
+                    </label>
                     <Input value={PacienteToView.nome_mae} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Religião</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Religião
+                    </label>
                     <Input value={PacienteToView.religiao} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Praticante</label>
-                    <Input value={PacienteToView.praticante ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Praticante
+                    </label>
+                    <Input
+                      value={PacienteToView.praticante ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Profissão</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Profissão
+                    </label>
                     <Input value={PacienteToView.profissao} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Escolaridade</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Escolaridade
+                    </label>
                     <Input value={PacienteToView.escolaridade} readOnly />
                   </div>
                 </div>
 
                 {/* Seção 2: Dados de Acolhimento */}
-                <h3 className="text-lg font-semibold mt-6">Dados de Acolhimento</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Dados de Acolhimento
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Data de Acolhimento</label>
-                    <Input value={new Date(PacienteToView.data_acolhimento).toLocaleDateString('pt-BR')} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Data de Acolhimento
+                    </label>
+                    <Input
+                      value={new Date(
+                        PacienteToView.data_acolhimento
+                      ).toLocaleDateString("pt-BR")}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Responsável</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Responsável
+                    </label>
                     <Input value={PacienteToView.responsavel} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Telefone Responsável</label>
-                    <Input value={PacienteToView.telefone_responsavel} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Telefone Responsável
+                    </label>
+                    <Input
+                      value={PacienteToView.telefone_responsavel}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Endereço</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Endereço
+                    </label>
                     <Input value={PacienteToView.endereco} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Contato de Emergência</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Contato de Emergência
+                    </label>
                     <Input value={PacienteToView.contato_emergencia} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Acolhido em Outra Instituição</label>
-                    <Input value={PacienteToView.acolhido_outra_instituicao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Acolhido em Outra Instituição
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.acolhido_outra_instituicao
+                          ? "Sim"
+                          : "Não"
+                      }
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.acolhido_outra_instituicao && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tempo de Acolhimento Anterior</label>
-                      <Input value={PacienteToView.tempo_acolhimento_anterior} readOnly />
+                      <label className="block text-sm font-medium mb-1">
+                        Tempo de Acolhimento Anterior
+                      </label>
+                      <Input
+                        value={PacienteToView.tempo_acolhimento_anterior}
+                        readOnly
+                      />
                     </div>
                   )}
                 </div>
 
                 {/* Seção 3: Dados do Responsável */}
-                <h3 className="text-lg font-semibold mt-6">Dados do Responsável</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Dados do Responsável
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">CPF do Responsável</label>
+                    <label className="block text-sm font-medium mb-1">
+                      CPF do Responsável
+                    </label>
                     <Input value={PacienteToView.cpf_responsavel} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">RG do Responsável</label>
+                    <label className="block text-sm font-medium mb-1">
+                      RG do Responsável
+                    </label>
                     <Input value={PacienteToView.rg_responsavel} readOnly />
                   </div>
                 </div>
 
                 {/* Seção 4: Informações de Saúde */}
-                <h3 className="text-lg font-semibold mt-6">Informações de Saúde</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Informações de Saúde
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Tipo Sanguíneo</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Tipo Sanguíneo
+                    </label>
                     <Input value={PacienteToView.tipo_sanguineo} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Possui Convênio</label>
-                    <Input value={PacienteToView.possui_convenio ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Possui Convênio
+                    </label>
+                    <Input
+                      value={PacienteToView.possui_convenio ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.possui_convenio && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Nome do Convênio</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Nome do Convênio
+                      </label>
                       <Input value={PacienteToView.nome_convenio} readOnly />
                     </div>
                   )}
                   <div className="col-span-1 md:col-span-3">
-                    <label className="block text-sm font-medium mb-1">Medicamentos em Uso</label>
-                    <Textarea value={PacienteToView.medicamentos_uso} readOnly rows={3} />
+                    <label className="block text-sm font-medium mb-1">
+                      Medicamentos em Uso
+                    </label>
+                    <Textarea
+                      value={PacienteToView.medicamentos_uso}
+                      readOnly
+                      rows={3}
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Alergias Medicamentosas</label>
-                    <Input value={PacienteToView.alergias_medicamentosas ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Alergias Medicamentosas
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.alergias_medicamentosas ? "Sim" : "Não"
+                      }
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.alergias_medicamentosas && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Quais Alergias</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Quais Alergias
+                      </label>
                       <Input value={PacienteToView.quais_alergias} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Diabetes</label>
-                    <Input value={PacienteToView.diabetes ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Diabetes
+                    </label>
+                    <Input
+                      value={PacienteToView.diabetes ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.diabetes && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipo de Diabetes</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipo de Diabetes
+                      </label>
                       <Input value={PacienteToView.tipo_diabetes} readOnly />
                     </div>
                   )}
                 </div>
 
                 {/* Seção 5: Vacinação e Saúde */}
-                <h3 className="text-lg font-semibold mt-6">Vacinação e Saúde</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Vacinação e Saúde
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Receituário Médico</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Receituário Médico
+                    </label>
                     <Input value={PacienteToView.receituario_medico} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Carteira de Vacinação</label>
-                    <Input value={PacienteToView.carteira_vacinacao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Carteira de Vacinação
+                    </label>
+                    <Input
+                      value={PacienteToView.carteira_vacinacao ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Situação Vacinal</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Situação Vacinal
+                    </label>
                     <Input value={PacienteToView.situacao_vacinal} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">1ª Dose COVID</label>
-                    <Input value={PacienteToView.vacina_covid_1 ? new Date(PacienteToView.vacina_covid_1).toLocaleDateString('pt-BR') : 'Não informado'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      1ª Dose COVID
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.vacina_covid_1
+                          ? new Date(
+                              PacienteToView.vacina_covid_1
+                            ).toLocaleDateString("pt-BR")
+                          : "Não informado"
+                      }
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">2ª Dose COVID</label>
-                    <Input value={PacienteToView.vacina_covid_2 ? new Date(PacienteToView.vacina_covid_2).toLocaleDateString('pt-BR') : 'Não informado'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      2ª Dose COVID
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.vacina_covid_2
+                          ? new Date(
+                              PacienteToView.vacina_covid_2
+                            ).toLocaleDateString("pt-BR")
+                          : "Não informado"
+                      }
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">3ª Dose COVID</label>
-                    <Input value={PacienteToView.vacina_covid_3 ? new Date(PacienteToView.vacina_covid_3).toLocaleDateString('pt-BR') : 'Não informado'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      3ª Dose COVID
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.vacina_covid_3
+                          ? new Date(
+                              PacienteToView.vacina_covid_3
+                            ).toLocaleDateString("pt-BR")
+                          : "Não informado"
+                      }
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">4ª Dose COVID</label>
-                    <Input value={PacienteToView.vacina_covid_4 ? new Date(PacienteToView.vacina_covid_4).toLocaleDateString('pt-BR') : 'Não informado'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      4ª Dose COVID
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.vacina_covid_4
+                          ? new Date(
+                              PacienteToView.vacina_covid_4
+                            ).toLocaleDateString("pt-BR")
+                          : "Não informado"
+                      }
+                      readOnly
+                    />
                   </div>
                 </div>
 
                 {/* Seção 6: Mobilidade e Atividades */}
-                <h3 className="text-lg font-semibold mt-6">Mobilidade e Atividades</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Mobilidade e Atividades
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Grau de Dependência</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Grau de Dependência
+                    </label>
                     <Input value={PacienteToView.grau_dependencia} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Cadeirante</label>
-                    <Input value={PacienteToView.cadeirante ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Cadeirante
+                    </label>
+                    <Input
+                      value={PacienteToView.cadeirante ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.cadeirante && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tempo como Cadeirante</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tempo como Cadeirante
+                      </label>
                       <Input value={PacienteToView.tempo_cadeirante} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Usa Aparelhos de Locomoção</label>
-                    <Input value={PacienteToView.uso_aparelhos_locomocao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Usa Aparelhos de Locomoção
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.uso_aparelhos_locomocao ? "Sim" : "Não"
+                      }
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.uso_aparelhos_locomocao && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Quais Aparelhos</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Quais Aparelhos
+                      </label>
                       <Input value={PacienteToView.quais_aparelhos} readOnly />
                     </div>
                   )}
                   <div className="col-span-1 md:col-span-3">
-                    <label className="block text-sm font-medium mb-1">Preferências e Interesses</label>
-                    <Textarea value={PacienteToView.preferencias} readOnly rows={3} />
+                    <label className="block text-sm font-medium mb-1">
+                      Preferências e Interesses
+                    </label>
+                    <Textarea
+                      value={PacienteToView.preferencias}
+                      readOnly
+                      rows={3}
+                    />
                   </div>
                 </div>
 
                 {/* Seção 7: Hábitos e Condições */}
-                <h3 className="text-lg font-semibold mt-6">Hábitos e Condições</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Hábitos e Condições
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Tabagista</label>
-                    <Input value={PacienteToView.tabagista ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Tabagista
+                    </label>
+                    <Input
+                      value={PacienteToView.tabagista ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Etilista</label>
-                    <Input value={PacienteToView.etilista ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Etilista
+                    </label>
+                    <Input
+                      value={PacienteToView.etilista ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Prótese Dentária</label>
-                    <Input value={PacienteToView.protese_dentaria ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Prótese Dentária
+                    </label>
+                    <Input
+                      value={PacienteToView.protese_dentaria ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Utiliza Fraldas</label>
-                    <Input value={PacienteToView.utiliza_fraldas ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Utiliza Fraldas
+                    </label>
+                    <Input
+                      value={PacienteToView.utiliza_fraldas ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Orientação no Tempo</label>
-                    <Input value={PacienteToView.orientacao_tempo ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Orientação no Tempo
+                    </label>
+                    <Input
+                      value={PacienteToView.orientacao_tempo ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Orientação no Espaço</label>
-                    <Input value={PacienteToView.orientacao_espaco ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Orientação no Espaço
+                    </label>
+                    <Input
+                      value={PacienteToView.orientacao_espaco ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                 </div>
 
                 {/* Seção 8: Atividades da Vida Diária (AVDs) */}
-                <h3 className="text-lg font-semibold mt-6">Atividades da Vida Diária</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Atividades da Vida Diária
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Banho</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Banho
+                    </label>
                     <Input value={PacienteToView.banho} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Vestir</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Vestir
+                    </label>
                     <Input value={PacienteToView.vestir} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Banheiro</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Banheiro
+                    </label>
                     <Input value={PacienteToView.banheiro} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Transferência</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Transferência
+                    </label>
                     <Input value={PacienteToView.transferencia} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Continência</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Continência
+                    </label>
                     <Input value={PacienteToView.continencia} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Alimentação</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Alimentação
+                    </label>
                     <Input value={PacienteToView.alimentacao} readOnly />
                   </div>
                 </div>
 
                 {/* Seção 9: Condições Clínicas e Funcionais */}
-                <h3 className="text-lg font-semibold mt-6">Condições Clínicas e Funcionais</h3>
+                <h3 className="text-lg font-semibold mt-6">
+                  Condições Clínicas e Funcionais
+                </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Dificuldade Visual</label>
-                    <Input value={PacienteToView.dificuldade_visual ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Dificuldade Visual
+                    </label>
+                    <Input
+                      value={PacienteToView.dificuldade_visual ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Usa Óculos</label>
-                    <Input value={PacienteToView.usa_oculos ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Usa Óculos
+                    </label>
+                    <Input
+                      value={PacienteToView.usa_oculos ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Demência</label>
-                    <Input value={PacienteToView.demencia ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Demência
+                    </label>
+                    <Input
+                      value={PacienteToView.demencia ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.demencia && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipo de Demência</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipo de Demência
+                      </label>
                       <Input value={PacienteToView.tipo_demencia} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Comunicação Verbal</label>
-                    <Input value={PacienteToView.comunicacao_verbal ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Comunicação Verbal
+                    </label>
+                    <Input
+                      value={PacienteToView.comunicacao_verbal ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Dificuldade de Fala</label>
-                    <Input value={PacienteToView.dificuldade_fala ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Dificuldade de Fala
+                    </label>
+                    <Input
+                      value={PacienteToView.dificuldade_fala ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Dificuldade Auditiva</label>
-                    <Input value={PacienteToView.dificuldade_auditiva ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Dificuldade Auditiva
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.dificuldade_auditiva ? "Sim" : "Não"
+                      }
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Prótese Auditiva</label>
-                    <Input value={PacienteToView.protese_auditiva ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Prótese Auditiva
+                    </label>
+                    <Input
+                      value={PacienteToView.protese_auditiva ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">AVC</label>
-                    <Input value={PacienteToView.avc ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      AVC
+                    </label>
+                    <Input
+                      value={PacienteToView.avc ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">TCE</label>
-                    <Input value={PacienteToView.tce ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      TCE
+                    </label>
+                    <Input
+                      value={PacienteToView.tce ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Hipertensão</label>
-                    <Input value={PacienteToView.hipertensao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Hipertensão
+                    </label>
+                    <Input
+                      value={PacienteToView.hipertensao ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Cardiopatias</label>
-                    <Input value={PacienteToView.cardiopatias ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Cardiopatias
+                    </label>
+                    <Input
+                      value={PacienteToView.cardiopatias ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.cardiopatias && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Quais Cardiopatias</label>
-                      <Input value={PacienteToView.quais_cardiopatias} readOnly />
+                      <label className="block text-sm font-medium mb-1">
+                        Quais Cardiopatias
+                      </label>
+                      <Input
+                        value={PacienteToView.quais_cardiopatias}
+                        readOnly
+                      />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Hipotireoidismo</label>
-                    <Input value={PacienteToView.hipotireoidismo ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Hipotireoidismo
+                    </label>
+                    <Input
+                      value={PacienteToView.hipotireoidismo ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Colesterol Alto</label>
-                    <Input value={PacienteToView.colesterol_alto ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Colesterol Alto
+                    </label>
+                    <Input
+                      value={PacienteToView.colesterol_alto ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Artrose</label>
-                    <Input value={PacienteToView.artrose ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Artrose
+                    </label>
+                    <Input
+                      value={PacienteToView.artrose ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Histórico de Câncer</label>
-                    <Input value={PacienteToView.historico_cancer ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Histórico de Câncer
+                    </label>
+                    <Input
+                      value={PacienteToView.historico_cancer ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.historico_cancer && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipo de Câncer</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipo de Câncer
+                      </label>
                       <Input value={PacienteToView.tipo_cancer} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Osteoporose</label>
-                    <Input value={PacienteToView.osteoporose ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Osteoporose
+                    </label>
+                    <Input
+                      value={PacienteToView.osteoporose ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Fraturas</label>
-                    <Input value={PacienteToView.fraturas ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Fraturas
+                    </label>
+                    <Input
+                      value={PacienteToView.fraturas ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.fraturas && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Onde Fraturas</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Onde Fraturas
+                      </label>
                       <Input value={PacienteToView.onde_fraturas} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Cirurgia</label>
-                    <Input value={PacienteToView.cirurgia ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Cirurgia
+                    </label>
+                    <Input
+                      value={PacienteToView.cirurgia ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.cirurgia && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Onde Cirurgia</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Onde Cirurgia
+                      </label>
                       <Input value={PacienteToView.onde_cirurgia} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Depressão</label>
-                    <Input value={PacienteToView.depressao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Depressão
+                    </label>
+                    <Input
+                      value={PacienteToView.depressao ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Outros Antecedentes</label>
-                    <Input value={PacienteToView.outros_antecedentes} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Outros Antecedentes
+                    </label>
+                    <Input
+                      value={PacienteToView.outros_antecedentes}
+                      readOnly
+                    />
                   </div>
                 </div>
 
@@ -774,38 +1167,71 @@ export const PacientesPage = () => {
                 <h3 className="text-lg font-semibold mt-6">Alimentação</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Alimenta-se Sozinho</label>
-                    <Input value={PacienteToView.alimenta_sozinho ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Alimenta-se Sozinho
+                    </label>
+                    <Input
+                      value={PacienteToView.alimenta_sozinho ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Tipo de Alimentação</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Tipo de Alimentação
+                    </label>
                     <Input value={PacienteToView.tipo_alimentacao} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Dificuldade de Deglutição</label>
-                    <Input value={PacienteToView.dificuldade_degluticao ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Dificuldade de Deglutição
+                    </label>
+                    <Input
+                      value={
+                        PacienteToView.dificuldade_degluticao ? "Sim" : "Não"
+                      }
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Engasgos</label>
-                    <Input value={PacienteToView.engasgos ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Engasgos
+                    </label>
+                    <Input
+                      value={PacienteToView.engasgos ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Uso de Sonda</label>
-                    <Input value={PacienteToView.uso_sonda ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Uso de Sonda
+                    </label>
+                    <Input
+                      value={PacienteToView.uso_sonda ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.uso_sonda && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tipo de Sonda</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tipo de Sonda
+                      </label>
                       <Input value={PacienteToView.tipo_sonda} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Alergia Alimentar</label>
-                    <Input value={PacienteToView.alergia_alimento ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Alergia Alimentar
+                    </label>
+                    <Input
+                      value={PacienteToView.alergia_alimento ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.alergia_alimento && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Qual Alimento</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Qual Alimento
+                      </label>
                       <Input value={PacienteToView.qual_alimento} readOnly />
                     </div>
                   )}
@@ -815,22 +1241,39 @@ export const PacientesPage = () => {
                 <h3 className="text-lg font-semibold mt-6">Mobilidade</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Caminha Sozinho</label>
-                    <Input value={PacienteToView.caminha_sozinho ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Caminha Sozinho
+                    </label>
+                    <Input
+                      value={PacienteToView.caminha_sozinho ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Acamado</label>
-                    <Input value={PacienteToView.acamado ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Acamado
+                    </label>
+                    <Input
+                      value={PacienteToView.acamado ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   {PacienteToView.acamado && (
                     <div>
-                      <label className="block text-sm font-medium mb-1">Tempo Acamado</label>
+                      <label className="block text-sm font-medium mb-1">
+                        Tempo Acamado
+                      </label>
                       <Input value={PacienteToView.tempo_acamado} readOnly />
                     </div>
                   )}
                   <div>
-                    <label className="block text-sm font-medium mb-1">Risco de Quedas</label>
-                    <Input value={PacienteToView.risco_quedas ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Risco de Quedas
+                    </label>
+                    <Input
+                      value={PacienteToView.risco_quedas ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                 </div>
 
@@ -838,15 +1281,27 @@ export const PacientesPage = () => {
                 <h3 className="text-lg font-semibold mt-6">Comportamento</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Comunicativa</label>
-                    <Input value={PacienteToView.comunicativa ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Comunicativa
+                    </label>
+                    <Input
+                      value={PacienteToView.comunicativa ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Agressiva</label>
-                    <Input value={PacienteToView.agressiva ? 'Sim' : 'Não'} readOnly />
+                    <label className="block text-sm font-medium mb-1">
+                      Agressiva
+                    </label>
+                    <Input
+                      value={PacienteToView.agressiva ? "Sim" : "Não"}
+                      readOnly
+                    />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Humor Instável</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Humor Instável
+                    </label>
                     <Input value={PacienteToView.humor_instavel} readOnly />
                   </div>
                 </div>
@@ -891,7 +1346,8 @@ export const PacientesPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este paciente? Esta ação não pode
+              ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -907,4 +1363,4 @@ export const PacientesPage = () => {
       </AlertDialog>
     </main>
   );
-}
+};
