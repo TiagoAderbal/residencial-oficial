@@ -71,7 +71,7 @@ export const SignInPage = () => {
         <CardHeader>
           <CardTitle>Faça Login</CardTitle>
           <CardDescription>
-            Insira seu email e senha para acessar sua conta.
+            Insira seu email ou usuário para acessar sua conta.
           </CardDescription>
         </CardHeader>
 
