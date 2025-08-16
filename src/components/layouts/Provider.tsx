@@ -4,12 +4,12 @@ import { ThemeProvider } from "next-themes"
 import { Toaster } from "@/components/ui/sonner"
 import { useEffect } from "react"
 import dayjs from "dayjs"
-import { io } from "socket.io-client"
+// import { io } from "socket.io-client"
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar"
 import 'dayjs/locale/pt-br'
 
 /** Initialize socket.io */
-export const socket = io(process.env.NEXT_PUBLIC_API_BASE_URL as string)
+// export const socket = io(process.env.NEXT_PUBLIC_API_BASE_URL as string)
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
@@ -26,7 +26,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
         >
             {children}
 
-            <ProgressBar 
+            <ProgressBar
                 height="4px"
                 color="#493cdd"
                 shallowRouting
