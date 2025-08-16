@@ -50,7 +50,7 @@ export interface Lancamento {
   fine: number;
   discount: number;
   amount_paid: number;
-  observation?: string;
+  observation?: string | null; 
 };
 
 export type APIGetLancamentos = {

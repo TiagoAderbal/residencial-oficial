@@ -7,7 +7,7 @@ import {
   getLancamentos,
   createLancamento,
   updateLancamento,
-  deleteLancamento
+  deleteLancamento,
 } from "@/lib/requests";
 import { Button } from "@/components/ui/button";
 import {
@@ -100,12 +100,18 @@ export const LancamentosPage = () => {
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [currentLancamento, setCurrentLancamento] = useState<Lancamento | null>(null);
+  const [currentLancamento, setCurrentLancamento] = useState<Lancamento | null>(
+    null
+  );
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [lancamentoToDelete, setLancamentoToDelete] = useState<number | null>(null);
+  const [lancamentoToDelete, setLancamentoToDelete] = useState<number | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
-  const [lancamentoToView, setLancamentoToView] = useState<Lancamento | null>(null);
+  const [lancamentoToView, setLancamentoToView] = useState<Lancamento | null>(
+    null
+  );
   const [pagination, setPagination] = useState({
     count: 0,
     currentPage: 1,
@@ -155,7 +161,7 @@ export const LancamentosPage = () => {
       if (startPage > 1) {
         pageNumbers.push(1);
         if (startPage > 2) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
       }
 
@@ -165,7 +171,7 @@ export const LancamentosPage = () => {
 
       if (endPage < totalPages) {
         if (endPage < totalPages - 1) {
-          pageNumbers.push('...');
+          pageNumbers.push("...");
         }
         pageNumbers.push(totalPages);
       }
@@ -184,6 +190,10 @@ export const LancamentosPage = () => {
     setOpenDrawer(true);
   };
 
+  const parseCurrency = (value: string): number => {
+    return Number(value.replace(/\./g, "").replace(",", "."));
+  };
+
   const handleSubmit = async (values: LancamentoFormValues) => {
     setIsSubmitting(true);
     try {
@@ -198,10 +208,10 @@ export const LancamentosPage = () => {
         situation: values.situation,
         installment: values.installment,
         dueDate: values.dueDate,
-        value: values.value,
-        fine: values.fine,
-        discount: values.discount,
-        amount_paid: values.amount_paid,
+        value: parseCurrency(values.value),
+        fine: parseCurrency(values.fine),
+        discount: parseCurrency(values.discount),
+        amount_paid: parseCurrency(values.amount_paid),
         observation: values.observation || null,
       };
 
@@ -213,7 +223,6 @@ export const LancamentosPage = () => {
         toast.success("Lançamento criado com sucesso!");
       }
 
-      // Recarrega mantendo a página atual
       fetchLancamentos(pagination.currentPage);
       setOpenDrawer(false);
     } catch (error) {
@@ -249,13 +258,13 @@ export const LancamentosPage = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('pt-BR');
+    return new Date(dateString).toLocaleDateString("pt-BR");
   };
 
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
     }).format(value);
   };
 
@@ -264,32 +273,50 @@ export const LancamentosPage = () => {
 
     return {
       ...lancamento,
-      supplier: lancamento.supplier ? {
-        id: lancamento.supplier.id,
-        name: lancamento.supplier.name
-      } : null,
-      account: lancamento.account ? {
-        id: lancamento.account.id,
-        name: lancamento.account.name
-      } : null,
-      document: lancamento.document ? {
-        id: lancamento.document.id,
-        name: lancamento.document.name
-      } : null,
-      plan_account: lancamento.plan_account ? {
-        id: lancamento.plan_account.id,
-        name: lancamento.plan_account.name,
-        code: lancamento.plan_account.code
-      } : null,
-      payment_method: lancamento.payment_method ? {
-        id: lancamento.payment_method.id,
-        name: lancamento.payment_method.name
-      } : null,
+      supplier: lancamento.supplier
+        ? {
+            id: lancamento.supplier.id,
+            name: lancamento.supplier.name,
+          }
+        : null,
+      account: lancamento.account
+        ? {
+            id: lancamento.account.id,
+            name: lancamento.account.name,
+          }
+        : null,
+      document: lancamento.document
+        ? {
+            id: lancamento.document.id,
+            name: lancamento.document.name,
+          }
+        : null,
+      plan_account: lancamento.plan_account
+        ? {
+            id: lancamento.plan_account.id,
+            name: lancamento.plan_account.name,
+            code: lancamento.plan_account.code,
+          }
+        : null,
+      payment_method: lancamento.payment_method
+        ? {
+            id: lancamento.payment_method.id,
+            name: lancamento.payment_method.name,
+          }
+        : null,
       situation: lancamento.situation as "0" | "1",
-      value: lancamento.value.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-      fine: lancamento.fine.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-      discount: lancamento.discount.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-      amount_paid: lancamento.amount_paid.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+      value: lancamento.value.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+      fine: lancamento.fine.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+      discount: lancamento.discount.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
+      amount_paid: lancamento.amount_paid.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+      }),
     };
   };
 
@@ -318,8 +345,7 @@ export const LancamentosPage = () => {
           ) : (
             <>
               <div className="border rounded-lg overflow-hidden">
-                <div
-                  className="grid grid-cols-11 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
+                <div className="grid grid-cols-11 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
                   <div className="truncate-cell-lanc">Fornecedor</div>
                   <div className="truncate-cell-lanc">Contábil</div>
                   <div className="truncate-cell-lanc">Pagamento</div>
@@ -333,17 +359,41 @@ export const LancamentosPage = () => {
                   <div className="truncate-cell-lanc">Ações</div>
                 </div>
                 {lancamentos.map((lancamento) => (
-                  <div key={lancamento.id} className="grid grid-cols-11 p-4 border-t items-center text-sm">
-                    <div className="truncate-cell-lanc">{lancamento.supplier?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.plan_account?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.payment_method?.name}</div>
-                    <div className="truncate-cell-lanc">{lancamento.situation === "0" ? "Pendente" : "Pago"}</div>
-                    <div className="truncate-cell-lanc">{lancamento.installment} {lancamento.installment === 1 ? 'Parcela' : 'Parcelas'}</div>
-                    <div className="truncate-cell-lanc">{formatDate(lancamento.dueDate)}</div>
-                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.value)}</div>
-                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.fine)}</div>
-                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.discount)}</div>
-                    <div className="truncate-cell-lanc">{formatCurrency(lancamento.amount_paid)}</div>
+                  <div
+                    key={lancamento.id}
+                    className="grid grid-cols-11 p-4 border-t items-center text-sm"
+                  >
+                    <div className="truncate-cell-lanc">
+                      {lancamento.supplier?.name}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {lancamento.plan_account?.name}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {lancamento.payment_method?.name}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {lancamento.situation === "0" ? "Pendente" : "Pago"}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {lancamento.installment}{" "}
+                      {lancamento.installment === 1 ? "Parcela" : "Parcelas"}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {formatDate(lancamento.dueDate)}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {formatCurrency(lancamento.value)}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {formatCurrency(lancamento.fine)}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {formatCurrency(lancamento.discount)}
+                    </div>
+                    <div className="truncate-cell-lanc">
+                      {formatCurrency(lancamento.amount_paid)}
+                    </div>
                     <div className="flex gap-2">
                       <Button
                         variant="outline"
@@ -379,7 +429,8 @@ export const LancamentosPage = () => {
               {/* Paginação simplificada */}
               <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
-                  Total: {pagination.count} lançamentos • Página {pagination.currentPage} de {pagination.totalPages}
+                  Total: {pagination.count} lançamentos • Página{" "}
+                  {pagination.currentPage} de {pagination.totalPages}
                 </div>
                 <div className="flex gap-1">
                   <Button
@@ -399,8 +450,8 @@ export const LancamentosPage = () => {
                     Anterior
                   </Button>
 
-                  {getPageNumbers().map((pageNum, index) => (
-                    pageNum === '...' ? (
+                  {getPageNumbers().map((pageNum, index) =>
+                    pageNum === "..." ? (
                       <Button
                         key={`ellipsis-${index}`}
                         variant="outline"
@@ -413,14 +464,18 @@ export const LancamentosPage = () => {
                     ) : (
                       <Button
                         key={pageNum}
-                        variant={pageNum === pagination.currentPage ? "default" : "outline"}
+                        variant={
+                          pageNum === pagination.currentPage
+                            ? "default"
+                            : "outline"
+                        }
                         size="sm"
                         onClick={() => fetchLancamentos(Number(pageNum))}
                       >
                         {pageNum}
                       </Button>
                     )
-                  ))}
+                  )}
 
                   <Button
                     variant="outline"
@@ -459,30 +514,28 @@ export const LancamentosPage = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Fornecedor</label>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Fornecedor
+                      </label>
                       <Input value={lancamentoToView.supplier?.name} readOnly />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Tipo de Conta</label>
-                      <Input value={`${lancamentoToView.account?.name}`} readOnly />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Lançado por</label>
-                      <Input value={`${lancamentoToView.user?.first_name || ''} ${lancamentoToView.user?.last_name || ''}`.trim()} readOnly />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Número</label>
-                      <Input value={lancamentoToView.number || "Não informado"} readOnly />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Situação</label>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Tipo de Conta
+                      </label>
                       <Input
-                        value={lancamentoToView.situation === "0" ? "Pendente" : "Pago"}
+                        value={`${lancamentoToView.account?.name}`}
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Lançado por
+                      </label>
+                      <Input
+                        value={`${lancamentoToView.user?.first_name || ""} ${
+                          lancamentoToView.user?.last_name || ""
+                        }`.trim()}
                         readOnly
                       />
                     </div>
@@ -492,12 +545,53 @@ export const LancamentosPage = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Parcela</label>
-                      <Input value={`${lancamentoToView.installment} ${lancamentoToView.installment === 1 ? 'Parcela' : 'Parcelas'}`} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Número
+                      </label>
+                      <Input
+                        value={lancamentoToView.number || "Não informado"}
+                        readOnly
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Data de Vencimento</label>
-                      <Input value={formatDate(lancamentoToView.dueDate)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Situação
+                      </label>
+                      <Input
+                        value={
+                          lancamentoToView.situation === "0"
+                            ? "Pendente"
+                            : "Pago"
+                        }
+                        readOnly
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Parcela
+                      </label>
+                      <Input
+                        value={`${lancamentoToView.installment} ${
+                          lancamentoToView.installment === 1
+                            ? "Parcela"
+                            : "Parcelas"
+                        }`}
+                        readOnly
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Data de Vencimento
+                      </label>
+                      <Input
+                        value={formatDate(lancamentoToView.dueDate)}
+                        readOnly
+                      />
                     </div>
                   </div>
                 </div>
@@ -505,27 +599,52 @@ export const LancamentosPage = () => {
                 <div className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Valor Original</label>
-                      <Input value={formatCurrency(lancamentoToView.value)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Valor Original
+                      </label>
+                      <Input
+                        value={formatCurrency(lancamentoToView.value)}
+                        readOnly
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Multa</label>
-                      <Input value={formatCurrency(lancamentoToView.fine)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Multa
+                      </label>
+                      <Input
+                        value={formatCurrency(lancamentoToView.fine)}
+                        readOnly
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Desconto</label>
-                      <Input value={formatCurrency(lancamentoToView.discount)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Desconto
+                      </label>
+                      <Input
+                        value={formatCurrency(lancamentoToView.discount)}
+                        readOnly
+                      />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium mb-1 text-muted-foreground">Valor Total Pago</label>
-                      <Input value={formatCurrency(lancamentoToView.amount_paid)} readOnly />
+                      <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                        Valor Total Pago
+                      </label>
+                      <Input
+                        value={formatCurrency(lancamentoToView.amount_paid)}
+                        readOnly
+                      />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1 text-muted-foreground">Observações</label>
+                    <label className="block text-sm font-medium mb-1 text-muted-foreground">
+                      Observações
+                    </label>
                     <textarea
                       className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 min-h-[100px]"
-                      value={lancamentoToView.observation || "Nenhuma observação registrada"}
+                      value={
+                        lancamentoToView.observation ||
+                        "Nenhuma observação registrada"
+                      }
                       readOnly
                     />
                   </div>
@@ -569,7 +688,8 @@ export const LancamentosPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir este lançamento? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir este lançamento? Esta ação não pode
+              ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
