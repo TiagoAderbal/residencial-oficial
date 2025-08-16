@@ -285,7 +285,7 @@ export const LancamentosPage = () => {
             id: lancamento.supplier.id,
             name: lancamento.supplier.name,
           }
-        : null,
+        : undefined,
       account: lancamento.account
         ? {
             id: lancamento.account.id,
