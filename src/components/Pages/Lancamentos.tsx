@@ -124,7 +124,14 @@ export const LancamentosPage = () => {
     try {
       setIsLoading(true);
       const { data: response } = await getLancamentos(page);
-      setLancamentos(response?.results || []);
+
+      const sanitizedResults =
+        response?.results.map((item) => ({
+          ...item,
+          observation: item.observation ?? undefined, // converte null para undefined
+        })) || [];
+
+      setLancamentos(sanitizedResults);
 
       const totalCount = response?.count || 0;
       setPagination({
