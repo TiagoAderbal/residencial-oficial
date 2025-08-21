@@ -32,6 +32,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Fornecedor } from "@/types/Fornecedor";
+import { TipoConta } from "@/types/TipoContas";
+import { TipoDocumento } from "@/types/TipoDocumentos";
+import { PlanoConta } from "@/types/PlanoContas";
+import { FormaPagamento } from "@/types/FormaPagamento";
 
 export const LancamentoForm = ({
   onSubmit,
@@ -44,20 +49,15 @@ export const LancamentoForm = ({
   loading?: boolean;
   onCancel: () => void;
 }) => {
-  const [fornecedores, setFornecedores] = useState<any[]>([]);
-  const [tipoContas, setTipoContas] = useState<any[]>([]);
-  const [tipoDocumentos, setTipoDocumentos] = useState<any[]>([]);
-  const [planoContas, setPlanoContas] = useState<any[]>([]);
-  const [formaPagamentos, setFormaPagamentos] = useState<any[]>([]);
+  const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
+  const [tipoContas, setTipoContas] = useState<TipoConta[]>([]);
+  const [tipoDocumentos, setTipoDocumentos] = useState<TipoDocumento[]>([]);
+  const [planoContas, setPlanoContas] = useState<PlanoConta[]>([]);
+  const [formaPagamentos, setFormaPagamentos] = useState<FormaPagamento[]>([]);
 
   const form = useForm<LancamentoFormValues>({
     resolver: zodResolver(lancamentoSchema),
     defaultValues: defaultValues || {
-      supplier: null,
-      account: null,
-      document: null,
-      plan_account: null,
-      payment_method: null,
       number: "",
       situation: "0",
       installment: 1,
@@ -101,64 +101,47 @@ export const LancamentoForm = ({
   }, []);
 
   useEffect(() => {
-    const value = parseCurrencyToFloat(form.getValues("value") || "0");
-    const fine = parseCurrencyToFloat(form.getValues("fine") || "0");
-    const discount = parseCurrencyToFloat(form.getValues("discount") || "0");
+    const value = parseCurrencyToFloat(form.getValues("value"));
+    const fine = parseCurrencyToFloat(form.getValues("fine"));
+    const discount = parseCurrencyToFloat(form.getValues("discount"));
 
     const total = value + fine - discount;
     const formattedTotal = formatDefaultValue(total);
 
     form.setValue("amount_paid", formattedTotal);
-  }, [form.watch("value"), form.watch("fine"), form.watch("discount")]);
+  }, [form, form.watch("value"), form.watch("fine"), form.watch("discount")]);
 
   const formatCurrency = (value: string) => {
-    // Remove todos os caracteres não numéricos
+    if (!value) return "0,00";
     let onlyNumbers = value.replace(/\D/g, "");
-
-    // Remove zeros à esquerda
     onlyNumbers = onlyNumbers.replace(/^0+/, "");
-
-    // Se ficou vazio, retorna "0,00"
     if (onlyNumbers === "") return "0,00";
-
-    // Garante duas casas decimais
     onlyNumbers = onlyNumbers.padStart(3, "0");
-
-    // Separa parte inteira e decimal
     const integerPart = onlyNumbers.slice(0, -2);
     const decimalPart = onlyNumbers.slice(-2);
-
-    // Formata parte inteira com separadores de milhar
-    const formattedInteger = integerPart
-      .split("")
-      .reverse()
-      .join("")
-      .replace(/(\d{3})(?=\d)/g, "$1.")
-      .split("")
-      .reverse()
-      .join("")
-      .replace(/^\./, "");
-
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     return `${formattedInteger},${decimalPart}`;
   };
 
-  const handleCurrencyChange = (field: any, value: string) => {
-    // Formata o valor enquanto digita
+  const handleCurrencyChange = (
+    field: { onChange: (value: string) => void },
+    value: string
+  ) => {
     const formattedValue = formatCurrency(value);
     field.onChange(formattedValue);
   };
 
-  const parseCurrencyToFloat = (value: string) => {
+  const parseCurrencyToFloat = (value: string | undefined) => {
+    if (!value) return 0;
     return parseFloat(value.replace(/\./g, "").replace(",", "."));
   };
 
-  // Função para formatar valores padrão
   const formatDefaultValue = (value: number | undefined) => {
     return value
       ? value.toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        })
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
       : "0,00";
   };
 
@@ -168,18 +151,13 @@ export const LancamentoForm = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="supplier"
+            name="supplier_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Fornecedor *</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    const selected = fornecedores.find(
-                      (f) => f.id === parseInt(value)
-                    );
-                    field.onChange(selected);
-                  }}
-                  value={field.value?.id?.toString() || ""}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -204,18 +182,13 @@ export const LancamentoForm = ({
 
           <FormField
             control={form.control}
-            name="account"
+            name="account_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Conta *</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    const selected = tipoContas.find(
-                      (t) => t.id === parseInt(value)
-                    );
-                    field.onChange(selected);
-                  }}
-                  value={field.value?.id?.toString() || ""}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -239,18 +212,13 @@ export const LancamentoForm = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
-            name="document"
+            name="document_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Documento *</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    const selected = tipoDocumentos.find(
-                      (d) => d.id === parseInt(value)
-                    );
-                    field.onChange(selected);
-                  }}
-                  value={field.value?.id?.toString() || ""}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -275,29 +243,13 @@ export const LancamentoForm = ({
 
           <FormField
             control={form.control}
-            name="plan_account"
+            name="plan_account_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Plano de Contas *</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    let selected = null;
-                    for (const group of planoContas) {
-                      if (group.id === parseInt(value)) {
-                        selected = group;
-                        break;
-                      }
-                      for (const sub of group.subMenus || []) {
-                        if (sub.id === parseInt(value)) {
-                          selected = sub;
-                          break;
-                        }
-                      }
-                      if (selected) break;
-                    }
-                    field.onChange(selected);
-                  }}
-                  value={field.value?.id?.toString() || ""}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -315,7 +267,7 @@ export const LancamentoForm = ({
                           {group.name} ({group.code})
                         </SelectItem>
 
-                        {group.subMenus?.map((sub) => (
+                        {group.subMenus?.map((sub: PlanoConta) => (
                           <SelectItem
                             key={sub.id}
                             value={sub.id.toString()}
@@ -336,18 +288,13 @@ export const LancamentoForm = ({
 
           <FormField
             control={form.control}
-            name="payment_method"
+            name="payment_method_id"
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Forma de Pagamento *</FormLabel>
                 <Select
-                  onValueChange={(value) => {
-                    const selected = formaPagamentos.find(
-                      (f) => f.id === parseInt(value)
-                    );
-                    field.onChange(selected);
-                  }}
-                  value={field.value?.id?.toString() || ""}
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -413,7 +360,7 @@ export const LancamentoForm = ({
                 <FormLabel>Parcela *</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(parseInt(value))}
-                  value={field.value?.toString()}
+                  value={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -459,10 +406,8 @@ export const LancamentoForm = ({
                 <FormLabel>Valor *</FormLabel>
                 <FormControl>
                   <Input
-                    value={field.value}
-                    onChange={(e) =>
-                      handleCurrencyChange(field, e.target.value)
-                    }
+                    {...field}
+                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -483,10 +428,8 @@ export const LancamentoForm = ({
                 <FormLabel>Multa/Juros</FormLabel>
                 <FormControl>
                   <Input
-                    value={field.value}
-                    onChange={(e) =>
-                      handleCurrencyChange(field, e.target.value)
-                    }
+                    {...field}
+                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -507,10 +450,8 @@ export const LancamentoForm = ({
                 <FormLabel>Desconto</FormLabel>
                 <FormControl>
                   <Input
-                    value={field.value}
-                    onChange={(e) =>
-                      handleCurrencyChange(field, e.target.value)
-                    }
+                    {...field}
+                    onChange={(e) => handleCurrencyChange(field, e.target.value)}
                     onFocus={(e) => {
                       if (e.target.value === "0,00") {
                         e.target.select();
@@ -532,8 +473,7 @@ export const LancamentoForm = ({
                 <FormControl>
                   <Input
                     readOnly
-                    value={field.value}
-                    className="bg-gray-1" // Estilo opcional para indicar que é readonly
+                    {...field}
                   />
                 </FormControl>
                 <FormMessage />
