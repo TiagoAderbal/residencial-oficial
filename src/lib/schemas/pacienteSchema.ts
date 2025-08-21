@@ -6,6 +6,7 @@ const requiredString = (fieldName: string) => z.string().min(1, {
 
 export const pacienteSchema = z.object({
   // Campos obrigatórios
+  id_user: z.number().min(1, { message: "ID do usuário é obrigatório" }),
   nome_completo: requiredString("Nome Completo"),
   rg: requiredString("RG"),
   cpf: requiredString("CPF"),

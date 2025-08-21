@@ -101,6 +101,7 @@ export interface Paciente {
   comunicativa?: boolean | null;
   agressiva?: boolean | null;
   humor_instavel?: string | null;
+  observacoes?: string | null;
   date_joined?: string | null;
   updated?: string | null;
 }

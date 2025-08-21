@@ -130,61 +130,6 @@ export const PacientesPage = () => {
     setOpenDrawer(true);
   };
 
-  const handleSubmit = async (values: PacienteFormValues) => {
-    if (!user) {
-      toast.error("Usuário não autenticado. Faça login novamente.");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // Garantir que a idade seja um número antes de enviar
-    const idade = values.idade ?? calcularIdade(values.data_nascimento);
-    if (typeof idade !== 'number') {
-      toast.error("Não foi possível calcular a idade. Verifique a data de nascimento.");
-      setIsSubmitting(false);
-      return;
-    }
-
-    // O erro de tipo indica que a função de requisição espera o objeto `user` aninhado,
-    // e não `id_user`. Vamos montar o payload de acordo com a assinatura da função.
-    const payload = {
-      ...values,
-      idade, // Agora é sempre um número
-      user: user, // Adiciona o objeto user completo
-    };
-
-    // Para a API, a função em `requests.ts` provavelmente extrai o `user.id`
-    // e monta o payload final com `id_user`.
-
-    try {
-      if (currentPaciente?.id) {
-        // A função de update provavelmente espera um payload parcial, mas vamos enviar completo para garantir
-        await updatePaciente(currentPaciente.id, payload);
-        toast.success("Paciente atualizado com sucesso!");
-      } else {
-        await createPaciente(payload);
-        toast.success("Paciente criado com sucesso!");
-      }
-
-      fetchPacientes(pagination.currentPage);
-      setOpenDrawer(false);
-      setCurrentPaciente(null);
-
-    } catch (error: any) {
-      const apiErrors = error?.response?.data;
-      if (typeof apiErrors === 'object' && apiErrors !== null) {
-        Object.entries(apiErrors).forEach(([field, messages]) => {
-          toast.error(`${field}: ${(messages as string[]).join(', ')}`);
-        });
-      } else {
-        toast.error(error.message || "Ocorreu um erro ao salvar o paciente.");
-      }
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleOpenView = (paciente: Paciente) => {
     setPacienteToView(paciente);
     setOpenViewDrawer(true);
@@ -208,26 +153,6 @@ export const PacientesPage = () => {
     }
   };
 
-  const formatPacienteForForm = (
-    paciente: Paciente | null
-  ): Partial<PacienteFormValues> | undefined => {
-    if (!paciente) return undefined;
-
-    // Mapeia o objeto do paciente para os valores do formulário
-    // Converte valores nulos/undefined para strings vazias ou padrões
-    const formValues: Partial<PacienteFormValues> = {};
-    for (const key in paciente) {
-      const typedKey = key as keyof Paciente;
-      const value = paciente[typedKey];
-      if (value !== null && value !== undefined) {
-        (formValues as any)[typedKey] = value;
-      } else {
-        (formValues as any)[typedKey] = ''; // ou outro valor padrão
-      }
-    }
-    return formValues;
-  };
-
   const calcularIdade = (dataNascimento: string | null | undefined) => {
     if (!dataNascimento) return "";
     const hoje = new Date();
@@ -244,6 +169,227 @@ export const PacientesPage = () => {
   const filteredPacientes = pacientes.filter((paciente) =>
     paciente.nome_completo.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Helper function to format labels
+  const formatLabel = (str: string) => {
+    const specialCases: { [key: string]: string } = {
+      ajuda_total: 'Ajuda Total',
+      // Add other special cases here if needed
+    };
+    if (specialCases[str]) {
+      return specialCases[str];
+    }
+    return str
+      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+  };
+
+  // Helper function to render values based on type
+  const renderValue = (k: string, v: any) => {
+    if (v === null || v === undefined || v === '') {
+      return 'Não preenchido';
+    }
+    if (k.includes('data_') || k.includes('date_')) {
+      const date = new Date(v);
+      if (!isNaN(date.getTime())) {
+        return date.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+      }
+    }
+    if (typeof v === 'boolean') {
+      return v ? 'Sim' : 'Não';
+    }
+    if (k === 'idade') {
+      return `${v} anos`;
+    }
+    // Handle 'observacoes' specifically as it's a Textarea
+    if (k === 'observacoes') {
+      return (
+        <Textarea
+          value={v}
+          readOnly
+          className="mt-1 resize-none"
+          rows={5}
+        />
+      );
+    }
+    // For all other string values, apply capitalization and underscore-to-space conversion
+    if (typeof v === 'string') {
+      // First, replace underscores with spaces
+      let formattedString = v.replace(/_/g, ' ');
+      // Then, capitalize the first letter of each word
+      formattedString = formattedString.replace(/\b\w/g, (char) => char.toUpperCase());
+      return formattedString;
+    }
+    return String(v);
+  };
+
+  interface DisplayField {
+    key: keyof Paciente;
+    label?: string;
+    render?: (value: any, paciente: Paciente) => React.ReactNode;
+    colSpan?: string;
+  }
+
+  interface DisplaySection {
+    title: string;
+    fields: DisplayField[];
+  }
+
+  const displayConfig: DisplaySection[] = [
+    {
+      title: "Informações Pessoais",
+      fields: [
+        { key: "nome_completo" },
+        { key: "data_nascimento", render: (value, paciente) => `${new Date(value).toLocaleDateString("pt-BR", { timeZone: 'UTC' })} (${calcularIdade(paciente.data_nascimento)} anos)` },
+        { key: "idade", render: (value) => `${value} anos` },
+        { key: "rg" },
+        { key: "cpf" },
+        { key: "naturalidade" },
+        { key: "religiao" },
+        { key: "praticante", render: (value) => (value ? "Sim" : "Não") },
+        { key: "profissao" },
+        { key: "escolaridade" },
+        { key: "estado_civil" },
+        { key: "orgao_expedidor" },
+      ],
+    },
+    {
+      title: "Filiação e Contato",
+      fields: [
+        { key: "nome_pai" },
+        { key: "nome_mae" },
+        { key: "responsavel" },
+        { key: "telefone_responsavel" },
+        { key: "rg_responsavel" },
+        { key: "cpf_responsavel" },
+        { key: "endereco", colSpan: "md:col-span-2" },
+        { key: "contato_emergencia" },
+      ],
+    },
+    {
+      title: "Informações de Acolhimento",
+      fields: [
+        { key: "data_acolhimento" },
+        { key: "acolhido_outra_instituicao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tempo_acolhimento_anterior" },
+      ],
+    },
+    {
+      title: "Saúde e Convênio",
+      fields: [
+        { key: "possui_convenio", render: (value) => (value ? "Sim" : "Não") },
+        { key: "nome_convenio" },
+        { key: "tipo_sanguineo" },
+        { key: "receituario_medico", colSpan: "md:col-span-2" },
+        { key: "carteira_vacinacao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "situacao_vacinal" },
+        { key: "vacina_covid_1" },
+        { key: "vacina_covid_2" },
+        { key: "vacina_covid_3" },
+        { key: "vacina_covid_4" },
+        { key: "alergias_medicamentosas", render: (value) => (value ? "Sim" : "Não") },
+        { key: "quais_alergias", colSpan: "md:col-span-2" },
+        { key: "tabagista", render: (value) => (value ? "Sim" : "Não") },
+        { key: "etilista", render: (value) => (value ? "Sim" : "Não") },
+        { key: "protese_dentaria", render: (value) => (value ? "Sim" : "Não") },
+        { key: "utiliza_fraldas", render: (value) => (value ? "Sim" : "Não") },
+      ],
+    },
+    {
+      title: "Avaliação Cognitiva e Funcional",
+      fields: [
+        { key: "orientacao_tempo", render: (value) => (value ? "Sim" : "Não") },
+        { key: "orientacao_espaco", render: (value) => (value ? "Sim" : "Não") },
+        { key: "medicamentos_uso", colSpan: "md:col-span-2" },
+        { key: "grau_dependencia" },
+        { key: "banho" },
+        { key: "vestir" },
+        { key: "banheiro" },
+        { key: "transferencia" },
+        { key: "continencia" },
+        { key: "alimentacao" },
+        { key: "preferencias", colSpan: "md:col-span-2" },
+        { key: "dificuldade_visual", render: (value) => (value ? "Sim" : "Não") },
+        { key: "usa_oculos", render: (value) => (value ? "Sim" : "Não") },
+        { key: "demencia", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tipo_demencia" },
+        { key: "comunicacao_verbal", render: (value) => (value ? "Sim" : "Não") },
+        { key: "dificuldade_fala", render: (value) => (value ? "Sim" : "Não") },
+        { key: "dificuldade_auditiva", render: (value) => (value ? "Sim" : "Não") },
+        { key: "protese_auditiva", render: (value) => (value ? "Sim" : "Não") },
+      ],
+    },
+    {
+      title: "Histórico Médico",
+      fields: [
+        { key: "avc", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tce", render: (value) => (value ? "Sim" : "Não") },
+        { key: "hipertensao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "cardiopatias", render: (value) => (value ? "Sim" : "Não") },
+        { key: "quais_cardiopatias", colSpan: "md:col-span-2" },
+        { key: "hipotireoidismo", render: (value) => (value ? "Sim" : "Não") },
+        { key: "colesterol_alto", render: (value) => (value ? "Sim" : "Não") },
+        { key: "artrose", render: (value) => (value ? "Sim" : "Não") },
+        { key: "diabetes", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tipo_diabetes" },
+        { key: "historico_cancer", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tipo_cancer" },
+        { key: "osteoporose", render: (value) => (value ? "Sim" : "Não") },
+        { key: "fraturas", render: (value) => (value ? "Sim" : "Não") },
+        { key: "onde_fraturas", colSpan: "md:col-span-2" },
+        { key: "cirurgia", render: (value) => (value ? "Sim" : "Não") },
+        { key: "onde_cirurgia", colSpan: "md:col-span-2" },
+        { key: "depressao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "outros_antecedentes", colSpan: "md:col-span-2" },
+      ],
+    },
+    {
+      title: "Nutrição e Mobilidade",
+      fields: [
+        { key: "alimenta_sozinho", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tipo_alimentacao" },
+        { key: "dificuldade_degluticao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "engasgos", render: (value) => (value ? "Sim" : "Não") },
+        { key: "uso_sonda", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tipo_sonda" },
+        { key: "alergia_alimento", render: (value) => (value ? "Sim" : "Não") },
+        { key: "qual_alimento" },
+        { key: "caminha_sozinho", render: (value) => (value ? "Sim" : "Não") },
+        { key: "cadeirante", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tempo_cadeirante" },
+        { key: "acamado", render: (value) => (value ? "Sim" : "Não") },
+        { key: "tempo_acamado" },
+        { key: "uso_aparelhos_locomocao", render: (value) => (value ? "Sim" : "Não") },
+        { key: "quais_aparelhos", colSpan: "md:col-span-2" },
+        { key: "risco_quedas", render: (value) => (value ? "Sim" : "Não") },
+      ],
+    },
+    {
+      title: "Comportamento",
+      fields: [
+        { key: "comunicativa", render: (value) => (value ? "Sim" : "Não") },
+        { key: "agressiva", render: (value) => (value ? "Sim" : "Não") },
+        { key: "humor_instavel" },
+      ],
+    },
+    {
+      title: "Outras Informações",
+      fields: [
+        {
+          key: "observacoes", colSpan: "md:col-span-2", render: (value) => (
+            <Textarea
+              value={value || 'Nenhuma observação.'}
+              readOnly
+              className="mt-1 resize-none"
+              rows={5}
+            />
+          )
+        },
+        { key: "date_joined", label: "Data de Cadastro", render: (value) => new Date(value).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) },
+        { key: "updated", label: "Última Atualização", render: (value) => new Date(value).toLocaleDateString("pt-BR", { timeZone: 'UTC' }) },
+      ],
+    },
+  ];
 
   return (
     <main className="h-app p-6 overflow-auto">
@@ -421,9 +567,33 @@ export const PacientesPage = () => {
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
             {pacienteToView && (
-              // O conteúdo do drawer de visualização permanece o mesmo
-              // por ser muito extenso e não fazer parte do escopo principal da tarefa.
-              <pre>{JSON.stringify(pacienteToView, null, 2)}</pre>
+              <div className="space-y-6">
+                {displayConfig.map((section) => (
+                  <div key={section.title} className="border p-4 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">{section.title}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {section.fields.map((field) => {
+                        const value = pacienteToView[field.key];
+                        const label = field.label || formatLabel(String(field.key));
+                        const renderedValue = field.render
+                          ? field.render(value, pacienteToView)
+                          : renderValue(String(field.key), value);
+
+                        return (
+                          <div key={String(field.key)} className={field.colSpan || ''}>
+                            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                              {label}:
+                            </p>
+                            <p className="text-lg font-semibold">
+                              {renderedValue}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
           <DrawerFooter>
@@ -449,8 +619,12 @@ export const PacientesPage = () => {
           </DrawerHeader>
           <div className="p-4 overflow-y-auto">
             <PacientesForm
-              onSubmit={handleSubmit}
-              defaultValues={formatPacienteForForm(currentPaciente)}
+              onSuccess={() => {
+                fetchPacientes(pagination.currentPage);
+                setOpenDrawer(false);
+                setCurrentPaciente(null);
+              }}
+              defaultValues={currentPaciente || undefined}
               loading={isSubmitting}
               onCancel={() => setOpenDrawer(false)}
             />
