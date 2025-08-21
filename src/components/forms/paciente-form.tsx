@@ -2,177 +2,64 @@
 
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { pacienteSchema, PacienteFormValues } from "@/lib/schemas/pacienteSchema";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { pacienteSchema, PacienteFormValues } from "@/lib/schemas/pacienteSchema";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuthStore } from "@/store/authStore";
 
-// Função utilitária para calcular idade (agora sempre retorna número)
-function calcularIdade(dataNascimento: string): number {
+// Função utilitária para calcular idade
+function calcularIdade(dataNascimento: string | undefined | null): number {
   if (!dataNascimento) return 0;
   const hoje = new Date();
   const nascimento = new Date(dataNascimento);
+  if (isNaN(nascimento.getTime())) return 0; // Data inválida
   let idade = hoje.getFullYear() - nascimento.getFullYear();
   const m = hoje.getMonth() - nascimento.getMonth();
   if (m < 0 || (m === 0 && hoje.getDate() < nascimento.getDate())) {
     idade--;
   }
-  return idade;
+  return idade > 0 ? idade : 0;
 }
 
-export const PacientesForm = ({
-  onSubmit,
-  defaultValues,
-  loading,
-  onCancel,
-}: {
+interface PacientesFormProps {
   onSubmit: (values: PacienteFormValues) => void;
   defaultValues?: Partial<PacienteFormValues>;
   loading?: boolean;
   onCancel: () => void;
-}) => {
-  const { user } = useAuthStore();
+}
 
-  // Valores padrão completos
-  const defaultFormValues: Partial<PacienteFormValues> = {
-    id_user: user?.id || 0,
-    data_avaliacao: new Date().toISOString().split('T')[0],
-    nome_completo: "",
-    data_nascimento: "",
-    idade: 0,
-    naturalidade: "",
-    religiao: "",
-    praticante: false,
-    profissao: "",
-    escolaridade: "",
-    estado_civil: "",
-    cpf: "",
-    rg: "",
-    orgao_expedidor: "",
-    nome_pai: "",
-    nome_mae: "",
-    data_acolhimento: new Date().toISOString().split('T')[0],
-    responsavel: "",
-    telefone_responsavel: "",
-    rg_responsavel: "",
-    cpf_responsavel: "",
-    endereco: "",
-    contato_emergencia: "",
-    acolhido_outra_instituicao: false,
-    tempo_acolhimento_anterior: "",
-    possui_convenio: false,
-    nome_convenio: "",
-    tipo_sanguineo: "",
-    receituario_medico: "",
-    carteira_vacinacao: false,
-    situacao_vacinal: "",
-    alergias_medicamentosas: false,
-    tabagista: false,
-    etilista: false,
-    protese_dentaria: false,
-    utiliza_fraldas: false,
-    orientacao_tempo: true,
-    orientacao_espaco: true,
-    grau_dependencia: null,
-    dificuldade_visual: false,
-    usa_oculos: false,
-    demencia: false,
-    comunicacao_verbal: true,
-    dificuldade_fala: false,
-    dificuldade_auditiva: false,
-    protese_auditiva: false,
-    avc: false,
-    tce: false,
-    hipertensao: false,
-    cardiopatias: false,
-    hipotireoidismo: false,
-    colesterol_alto: false,
-    artrose: false,
-    diabetes: false,
-    historico_cancer: false,
-    osteoporose: false,
-    fraturas: false,
-    cirurgia: false,
-    depressao: false,
-    outros_antecedentes: "",
-    alimenta_sozinho: true,
-    dificuldade_degluticao: false,
-    engasgos: false,
-    uso_sonda: false,
-    alergia_alimento: false,
-    caminha_sozinho: true,
-    cadeirante: false,
-    acamado: false,
-    uso_aparelhos_locomocao: false,
-    risco_quedas: false,
-    comunicativa: true,
-    agressiva: false,
-  };
-
+export const PacientesForm = ({ onSubmit, defaultValues, loading, onCancel }: PacientesFormProps) => {
   const form = useForm<PacienteFormValues>({
     resolver: zodResolver(pacienteSchema),
-    defaultValues: {
-      ...defaultFormValues,
-      ...(defaultValues || {}), // Sobrescreve com os defaultValues se fornecidos
-    },
+    defaultValues: defaultValues || {},
   });
 
-  // Campos com máscara dinâmica
-  const cpfValue = form.watch("cpf");
-  const telefoneValue = form.watch("telefone_responsavel");
-  const dataNascimento = form.watch("data_nascimento");
-  const formValues = form.watch();
-
-  // Atualiza idade quando data_nascimento muda
+  // Atualiza a idade dinamicamente quando a data de nascimento muda
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "data_nascimento") {
-        const idade = calcularIdade(value.data_nascimento || "");
+        const idade = calcularIdade(value.data_nascimento);
         form.setValue("idade", idade, { shouldValidate: true });
       }
     });
     return () => subscription.unsubscribe();
-  }, [form.watch]);
+  }, [form]);
 
-  // Garante que id_user está sempre atualizado
+  // Popula o formulário quando os valores padrão (para edição) são alterados
   useEffect(() => {
-    if (user?.id) {
-      form.setValue('id_user', user.id);
+    if (defaultValues) {
+      form.reset(defaultValues);
     }
-  }, [user?.id, form]);
+  }, [defaultValues, form]);
 
-  const handleSubmit = (values: PacienteFormValues) => {
-    // Filtra campos vazios (exceto booleanos, números e null)
-    const filteredValues = Object.fromEntries(
-      Object.entries(values).filter(([_, value]) => {
-        if (typeof value === "boolean" || typeof value === "number" || value === null) {
-          return true;
-        }
-        return value !== "" && value !== undefined;
-      })
-    ) as PacienteFormValues;
-
-    onSubmit(filteredValues);
-  };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit((values) => {
-        console.log(values); // Veja os dados do formulário aqui
-        onSubmit(values);
-      })} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         {/* Seção 1: Dados Pessoais */}
         <div className=" p-6 rounded-lg shadow">
           <h3 className="text-lg font-semibold mb-4">Dados Pessoais</h3>
@@ -184,7 +71,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Data de Avaliação</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} required />
+                    <Input type="date" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -196,9 +83,9 @@ export const PacientesForm = ({
               name="nome_completo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
+                  <FormLabel>Nome Completo *</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -210,9 +97,9 @@ export const PacientesForm = ({
               name="data_nascimento"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Data de Nascimento</FormLabel>
+                  <FormLabel>Data de Nascimento *</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} required />
+                    <Input type="date" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -240,7 +127,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Naturalidade</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -254,7 +141,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Estado Civil</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -276,11 +163,11 @@ export const PacientesForm = ({
               name="cpf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>CPF</FormLabel>
+                  <FormLabel>CPF *</FormLabel>
                   <FormControl>
                     <Input
                       {...field}
-                      required
+                      value={field.value ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value
@@ -303,9 +190,9 @@ export const PacientesForm = ({
               name="rg"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>RG</FormLabel>
+                  <FormLabel>RG *</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -319,7 +206,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Órgão Expedidor</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -333,7 +220,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Nome do Pai</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -347,14 +234,13 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Nome da Mãe</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            {/* Campos adicionais em Dados Pessoais */}
             <FormField
               control={form.control}
               name="religiao"
@@ -362,7 +248,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Religião</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -376,7 +262,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -394,7 +280,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Profissão</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -408,7 +294,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Escolaridade</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -428,7 +314,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Data de Acolhimento</FormLabel>
                   <FormControl>
-                    <Input type="date" {...field} required />
+                    <Input type="date" {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -442,7 +328,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Responsável</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -458,6 +344,7 @@ export const PacientesForm = ({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
                         const cleaned = value.replace(/\D/g, '');
@@ -491,7 +378,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Endereço</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -505,7 +392,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Contato de Emergência</FormLabel>
                   <FormControl>
-                    <Input {...field} required />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -520,7 +407,7 @@ export const PacientesForm = ({
                   <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
@@ -539,7 +426,7 @@ export const PacientesForm = ({
                     <FormItem>
                       <FormLabel>Tempo de Acolhimento Anterior</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -563,6 +450,7 @@ export const PacientesForm = ({
                   <FormControl>
                     <Input
                       {...field}
+                      value={field.value ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
                         field.onChange(value
@@ -586,7 +474,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>RG do Responsável</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -606,7 +494,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Tipo Sanguíneo</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -635,7 +523,7 @@ export const PacientesForm = ({
                   <FormItem className="flex flex-row items-end space-x-3 space-y-0 p-4">
                     <FormControl>
                       <Checkbox
-                        checked={field.value}
+                        checked={!!field.value}
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
@@ -654,7 +542,7 @@ export const PacientesForm = ({
                     <FormItem>
                       <FormLabel>Nome do Convênio</FormLabel>
                       <FormControl>
-                        <Input {...field} />
+                        <Input {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -670,7 +558,7 @@ export const PacientesForm = ({
                 <FormItem className="col-span-1 md:col-span-3">
                   <FormLabel>Medicamentos em Uso</FormLabel>
                   <FormControl>
-                    <Textarea {...field} rows={3} />
+                    <Textarea {...field} rows={3} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -686,7 +574,7 @@ export const PacientesForm = ({
                     <FormItem className="flex flex-row items-end space-x-3 space-y-0 p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={!!field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -705,7 +593,7 @@ export const PacientesForm = ({
                       <FormItem>
                         <FormLabel>Quais alergias?</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -722,7 +610,7 @@ export const PacientesForm = ({
                     <FormItem className="flex flex-row items-end space-x-3 space-y-0 p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={!!field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -741,7 +629,7 @@ export const PacientesForm = ({
                       <FormItem>
                         <FormLabel>Tipo de Diabetes</FormLabel>
                         <FormControl>
-                          <Select onValueChange={field.onChange} value={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value ?? ''}>
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione" />
                             </SelectTrigger>
@@ -774,7 +662,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Receituário Médico</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -796,7 +684,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -813,7 +701,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Situação Vacinal</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -838,6 +726,7 @@ export const PacientesForm = ({
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onChange={e => field.onChange(e.target.value === "" ? null : e.target.value)}
                     />
                   </FormControl>
@@ -855,6 +744,7 @@ export const PacientesForm = ({
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onChange={e => field.onChange(e.target.value === "" ? null : e.target.value)}
                     />
                   </FormControl>
@@ -872,6 +762,7 @@ export const PacientesForm = ({
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onChange={e => field.onChange(e.target.value === "" ? null : e.target.value)}
                     />
                   </FormControl>
@@ -889,6 +780,7 @@ export const PacientesForm = ({
                     <Input
                       type="date"
                       {...field}
+                      value={field.value ?? ''}
                       onChange={e => field.onChange(e.target.value === "" ? null : e.target.value)}
                     />
                   </FormControl>
@@ -941,7 +833,7 @@ export const PacientesForm = ({
                     <FormItem className="flex flex-row items-end space-x-3 space-y-0 p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={!!field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -960,7 +852,7 @@ export const PacientesForm = ({
                       <FormItem>
                         <FormLabel>Tempo como cadeirante</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -977,7 +869,7 @@ export const PacientesForm = ({
                     <FormItem className="flex flex-row items-end space-x-3 space-y-0 p-4">
                       <FormControl>
                         <Checkbox
-                          checked={field.value}
+                          checked={!!field.value}
                           onCheckedChange={field.onChange}
                         />
                       </FormControl>
@@ -996,7 +888,7 @@ export const PacientesForm = ({
                       <FormItem>
                         <FormLabel>Quais aparelhos?</FormLabel>
                         <FormControl>
-                          <Input {...field} />
+                          <Input {...field} value={field.value ?? ''} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -1013,7 +905,7 @@ export const PacientesForm = ({
                 <FormItem className="col-span-1 md:col-span-3">
                   <FormLabel>Preferências e Interesses</FormLabel>
                   <FormControl>
-                    <Textarea {...field} rows={3} />
+                    <Textarea {...field} rows={3} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1033,7 +925,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1050,7 +942,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1067,7 +959,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1084,7 +976,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1101,7 +993,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1118,7 +1010,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1142,7 +1034,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Banho</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1164,7 +1056,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Vestir</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1186,7 +1078,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Banheiro</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1208,7 +1100,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Transferência</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1230,7 +1122,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Continência</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1252,7 +1144,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Alimentação</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1281,7 +1173,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1298,7 +1190,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1315,7 +1207,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1334,7 +1226,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Tipo de Demência</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1348,7 +1240,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1365,7 +1257,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1382,7 +1274,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1399,7 +1291,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1416,7 +1308,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1433,7 +1325,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1450,7 +1342,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1467,7 +1359,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1485,7 +1377,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Quais cardiopatias?</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1499,7 +1391,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1516,7 +1408,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1533,7 +1425,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1550,7 +1442,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1568,7 +1460,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Tipo de Câncer</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1582,7 +1474,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1599,7 +1491,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1617,7 +1509,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Onde?</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1631,7 +1523,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1649,7 +1541,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Onde?</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1663,7 +1555,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1680,7 +1572,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Outros Antecedentes</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input {...field} value={field.value ?? ''} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -1700,7 +1592,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1717,7 +1609,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Tipo de Alimentação</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>
@@ -1739,7 +1631,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1756,7 +1648,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1773,7 +1665,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1791,7 +1683,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Tipo de Sonda</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1805,7 +1697,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1823,7 +1715,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Qual alimento?</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1844,7 +1736,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1861,7 +1753,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1879,7 +1771,7 @@ export const PacientesForm = ({
                   <FormItem>
                     <FormLabel>Tempo Acamado</FormLabel>
                     <FormControl>
-                      <Input {...field} />
+                      <Input {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1893,7 +1785,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1917,7 +1809,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1934,7 +1826,7 @@ export const PacientesForm = ({
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 p-4">
                   <FormControl>
                     <Checkbox
-                      checked={field.value}
+                      checked={!!field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
@@ -1951,7 +1843,7 @@ export const PacientesForm = ({
                 <FormItem>
                   <FormLabel>Humor Instável</FormLabel>
                   <FormControl>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value ?? ''}>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione" />
                       </SelectTrigger>

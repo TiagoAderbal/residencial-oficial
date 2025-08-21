@@ -39,62 +39,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/store/authStore";
+import { Lancamento } from "@/types/Lancamentos";
 import { LancamentoFormValues } from "@/lib/schemas/lancamentoSchema";
-
-type Lancamento = {
-  id?: number;
-  user: {
-    id: number;
-    username: string;
-    email: string;
-    first_name: string;
-    last_name: string;
-  };
-  supplier: {
-    id: number;
-    name: string;
-    taxId: string;
-    description: string;
-    address: string;
-    number: string;
-    city: string;
-    state: string;
-    country: string;
-    phone: string;
-    mobile: string;
-  };
-  account: {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-  };
-  document: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  plan_account: {
-    id: number;
-    name: string;
-    code: string;
-    description: string;
-  };
-  payment_method: {
-    id: number;
-    name: string;
-    description: string;
-  };
-  number: string;
-  situation: string;
-  installment: number;
-  dueDate: string;
-  value: number;
-  fine: number;
-  discount: number;
-  amount_paid: number;
-  observation?: string;
-};
 
 export const LancamentosPage = () => {
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
@@ -198,45 +144,49 @@ export const LancamentosPage = () => {
   };
 
   const parseCurrency = (value: string): number => {
+    if (!value) return 0;
     return Number(value.replace(/\./g, "").replace(",", "."));
   };
 
   const handleSubmit = async (values: LancamentoFormValues) => {
     setIsSubmitting(true);
-    try {
-      const payload = {
-        user_id: user?.id,
-        supplier_id: values.supplier?.id,
-        account_id: values.account?.id,
-        document_id: values.document?.id,
-        plan_account_id: values.plan_account?.id,
-        payment_method_id: values.payment_method?.id,
-        number: values.number,
-        situation: values.situation,
-        installment: values.installment,
-        dueDate: values.dueDate,
-        value: parseCurrency(values.value),
-        fine: parseCurrency(values.fine),
-        discount: parseCurrency(values.discount),
-        amount_paid: parseCurrency(values.amount_paid),
-        observation: values.observation || null,
-      };
 
-      if (currentLancamento?.id) {
-        await updateLancamento(currentLancamento.id, payload);
-        toast.success("Lançamento atualizado com sucesso!");
-      } else {
-        await createLancamento(payload);
-        toast.success("Lançamento criado com sucesso!");
-      }
+    const payload = {
+      user_id: user?.id,
+      supplier_id: values.supplier_id,
+      account_id: values.account_id,
+      document_id: values.document_id,
+      plan_account_id: values.plan_account_id,
+      payment_method_id: values.payment_method_id,
+      number: values.number,
+      situation: values.situation,
+      installment: values.installment,
+      dueDate: values.dueDate,
+      value: parseCurrency(values.value),
+      fine: parseCurrency(values.fine),
+      discount: parseCurrency(values.discount),
+      amount_paid: parseCurrency(values.amount_paid),
+      observation: values.observation || null,
+    };
 
+    const response = currentLancamento?.id
+      ? await updateLancamento(currentLancamento.id, payload)
+      : await createLancamento(payload);
+
+    setIsSubmitting(false);
+
+    if (response.error) {
+      // Se a API retornou um erro (4xx, 5xx), ele será exibido aqui
+      toast.error(response.error.message);
+    } else {
+      // Se deu tudo certo (2xx)
+      toast.success(
+        currentLancamento?.id
+          ? "Lançamento atualizado com sucesso!"
+          : "Lançamento criado com sucesso!"
+      );
       fetchLancamentos(pagination.currentPage);
       setOpenDrawer(false);
-    } catch (error) {
-      toast.error("Erro ao salvar lançamento");
-      console.error(error);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -265,7 +215,9 @@ export const LancamentosPage = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("pt-BR");
+    const date = new Date(dateString);
+    const userTimezoneOffset = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() + userTimezoneOffset).toLocaleDateString("pt-BR");
   };
 
   const formatCurrency = (value: number) => {
@@ -275,55 +227,29 @@ export const LancamentosPage = () => {
     }).format(value);
   };
 
-  const formatLancamentoForForm = (lancamento: Lancamento | null) => {
+  const formatLancamentoForForm = (
+    lancamento: Lancamento | null
+  ): Partial<LancamentoFormValues> | undefined => {
     if (!lancamento) return undefined;
 
+    const formatValue = (value: number) =>
+      value.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+
     return {
-      ...lancamento,
-      supplier: lancamento.supplier
-        ? {
-            id: lancamento.supplier.id,
-            name: lancamento.supplier.name,
-          }
-        : undefined,
-      account: lancamento.account
-        ? {
-            id: lancamento.account.id,
-            name: lancamento.account.name,
-          }
-        : undefined,
-      document: lancamento.document
-        ? {
-            id: lancamento.document.id,
-            name: lancamento.document.name,
-          }
-        : undefined,
-      plan_account: lancamento.plan_account
-        ? {
-            id: lancamento.plan_account.id,
-            name: lancamento.plan_account.name,
-            code: lancamento.plan_account.code,
-          }
-        : undefined,
-      payment_method: lancamento.payment_method
-        ? {
-            id: lancamento.payment_method.id,
-            name: lancamento.payment_method.name,
-          }
-        : undefined,
+      supplier_id: lancamento.supplier?.id,
+      account_id: lancamento.account?.id,
+      document_id: lancamento.document?.id,
+      plan_account_id: lancamento.plan_account?.id,
+      payment_method_id: lancamento.payment_method?.id,
+      number: lancamento.number,
       situation: lancamento.situation as "0" | "1",
-      value: lancamento.value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
-      fine: lancamento.fine.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
-      discount: lancamento.discount.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
-      amount_paid: lancamento.amount_paid.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-      }),
+      installment: lancamento.installment,
+      dueDate: lancamento.dueDate,
+      value: formatValue(lancamento.value),
+      fine: formatValue(lancamento.fine),
+      discount: formatValue(lancamento.discount),
+      amount_paid: formatValue(lancamento.amount_paid),
+      observation: lancamento.observation || "",
     };
   };
 
@@ -540,9 +466,8 @@ export const LancamentosPage = () => {
                         Lançado por
                       </label>
                       <Input
-                        value={`${lancamentoToView.user?.first_name || ""} ${
-                          lancamentoToView.user?.last_name || ""
-                        }`.trim()}
+                        value={`${lancamentoToView.user?.first_name || ""} ${lancamentoToView.user?.last_name || ""
+                          }`.trim()}
                         readOnly
                       />
                     </div>
@@ -583,11 +508,10 @@ export const LancamentosPage = () => {
                         Parcela
                       </label>
                       <Input
-                        value={`${lancamentoToView.installment} ${
-                          lancamentoToView.installment === 1
-                            ? "Parcela"
-                            : "Parcelas"
-                        }`}
+                        value={`${lancamentoToView.installment} ${lancamentoToView.installment === 1
+                          ? "Parcela"
+                          : "Parcelas"
+                          }`}
                         readOnly
                       />
                     </div>

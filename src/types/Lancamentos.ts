@@ -58,21 +58,23 @@ export type APIGetLancamentos = {
   count: number;
 };
 
+
+
 export type CreateLancamentoPayload = {
   user_id?: number;
-  supplier_id: number;
-  account_id: number;
-  document_id: number;
-  plan_account_id: number;
-  payment_method_id: number;
-  number: string;
-  situation: "0" | "1";
-  installment: number;
-  dueDate: string;
-  value: number;
-  fine: number;
-  discount: number;
-  amount_paid: number;
+  supplier_id?: number;
+  account_id?: number;
+  document_id?: number;
+  plan_account_id?: number;
+  payment_method_id?: number;
+  number?: string;
+  situation?: "0" | "1";
+  installment?: number;
+  dueDate?: string;
+  value?: number;
+  fine?: number;
+  discount?: number;
+  amount_paid?: number;
   observation?: string | null;
 };
 
