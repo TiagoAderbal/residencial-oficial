@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Eye, Edit, Search } from "lucide-react";
+import { Loader2, Plus, Trash2, Eye, Edit, Search, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -150,6 +150,17 @@ export const PacientesPage = () => {
       }
     } catch (error) {
       toast.error("Erro ao excluir paciente");
+    }
+  };
+
+  const handleWhatsAppClick = (contactNumber: string | undefined) => {
+    if (contactNumber) {
+      // Sanitize the number: remove non-digit characters
+      const sanitizedNumber = contactNumber.replace(/[^0-9]/g, '');
+      const whatsappUrl = `https://api.whatsapp.com/send?phone=55${sanitizedNumber}`;
+      window.open(whatsappUrl, '_blank');
+    } else {
+      toast.info("Número de contato de emergência não disponível.");
     }
   };
 
@@ -477,6 +488,15 @@ export const PacientesPage = () => {
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
+                      {paciente.contato_emergencia && (
+                        <Button
+                          variant="whatsapp"
+                          size="icon-round"
+                          onClick={() => handleWhatsAppClick(paciente.contato_emergencia || '')}
+                        >
+                          <Phone className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
