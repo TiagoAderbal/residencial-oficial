@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit, Trash2, Eye } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  MoreHorizontal,
+  CreditCard,
+} from "lucide-react";
 import {
   getLancamentos,
   createLancamento,
@@ -10,6 +18,14 @@ import {
   deleteLancamento,
 } from "@/lib/requests";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Card,
   CardContent,
@@ -41,6 +57,7 @@ import {
 import { useAuthStore } from "@/store/authStore";
 import { Lancamento } from "@/types/Lancamentos";
 import { LancamentoFormValues } from "@/lib/schemas/lancamentoSchema";
+import { Calendar } from "@/components/ui/calendar";
 
 export const LancamentosPage = () => {
   const [lancamentos, setLancamentos] = useState<Lancamento[]>([]);
@@ -58,6 +75,11 @@ export const LancamentosPage = () => {
   const [lancamentoToView, setLancamentoToView] = useState<Lancamento | null>(
     null
   );
+  const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
+  const [lancamentoToPay, setLancamentoToPay] = useState<Lancamento | null>(
+    null
+  );
+  const [paymentDate, setPaymentDate] = useState<Date | undefined>(new Date());
   const [pagination, setPagination] = useState({
     count: 0,
     currentPage: 1,
@@ -141,6 +163,57 @@ export const LancamentosPage = () => {
   const handleOpenEdit = (lancamento: Lancamento) => {
     setCurrentLancamento(lancamento);
     setOpenDrawer(true);
+  };
+
+  const handleOpenPaymentDialog = (lancamento: Lancamento) => {
+    setLancamentoToPay(lancamento);
+    setOpenPaymentDialog(true);
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!lancamentoToPay || !paymentDate) {
+      toast.error("Lançamento ou data de pagamento não selecionados.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const formattedDate = paymentDate.toLocaleDateString("pt-BR");
+    const observationText = `Lançamento pago dia ${formattedDate}`;
+    const newObservation = lancamentoToPay.observation
+      ? `${lancamentoToPay.observation}\n${observationText}`
+      : observationText;
+
+    // Create a payload with all fields from lancamentoToPay, then override what's needed
+    const payload = {
+      user_id: lancamentoToPay.user?.id,
+      supplier_id: lancamentoToPay.supplier?.id,
+      account_id: lancamentoToPay.account?.id,
+      document_id: lancamentoToPay.document?.id,
+      plan_account_id: lancamentoToPay.plan_account?.id,
+      payment_method_id: lancamentoToPay.payment_method?.id,
+      number: lancamentoToPay.number,
+      dueDate: lancamentoToPay.dueDate,
+      value: lancamentoToPay.value,
+      fine: lancamentoToPay.fine,
+      discount: lancamentoToPay.discount,
+      amount_paid: lancamentoToPay.amount_paid,
+      installment: lancamentoToPay.installment,
+      situation: "1" as "0" | "1",
+      observation: newObservation,
+    };
+
+    const response = await updateLancamento(lancamentoToPay.id!, payload);
+
+    setIsSubmitting(false);
+
+    if (response.error) {
+      toast.error(response.error.message || "Erro ao registrar pagamento.");
+    } else {
+      toast.success("Pagamento registrado com sucesso!");
+      fetchLancamentos(pagination.currentPage);
+      setOpenPaymentDialog(false);
+    }
   };
 
   const parseCurrency = (value: string): number => {
@@ -327,34 +400,49 @@ export const LancamentosPage = () => {
                     <div className="truncate-cell-lanc">
                       {formatCurrency(lancamento.amount_paid)}
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenView(lancamento)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenEdit(lancamento)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => {
-                          if (lancamento.id) {
-                            setLancamentoToDelete(lancamento.id);
-                            setOpenDeleteDialog(true);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menu</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                        <DropdownMenuItem
+                          onClick={() => handleOpenView(lancamento)}
+                        >
+                          <Eye className="mr-2 h-4 w-4" />
+                          Visualizar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handleOpenEdit(lancamento)}
+                        >
+                          <Edit className="mr-2 h-4 w-4" />
+                          Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleOpenPaymentDialog(lancamento)}
+                        >
+                          <CreditCard className="mr-2 h-4 w-4" />
+                          Registrar pagamento
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => {
+                            if (lancamento.id) {
+                              setLancamentoToDelete(lancamento.id);
+                              setOpenDeleteDialog(true);
+                            }
+                          }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 ))}
               </div>
@@ -432,6 +520,35 @@ export const LancamentosPage = () => {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog
+        open={openPaymentDialog}
+        onOpenChange={setOpenPaymentDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Registrar Pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione a data em que o pagamento foi efetuado. Essa ação
+              marcará o lançamento como "Pago".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="flex justify-center">
+            <Calendar
+              mode="single"
+              selected={paymentDate}
+              onSelect={setPaymentDate}
+              className="rounded-md border"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmPayment}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Drawer open={openViewDrawer} onOpenChange={setOpenViewDrawer}>
         <DrawerContent className="max-h-[90vh] p-8">
