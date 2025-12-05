@@ -50,31 +50,44 @@ export const PlanoContaForm = ({
     },
   });
 
-  const contasSinteticas = planosConta.filter((conta: PlanoConta) => conta.type === "s");
-
   const handleSubmit = (values: PlanoContaFormValues) => {
     const apiPayload = {
       ...values,
-      father: values.father ? Number(values.father) : null
+      father: values.father ? Number(values.father) : null,
     };
     onSubmit(apiPayload);
   };
 
+  const flattenAccounts = (accounts: PlanoConta[], level = 0): (PlanoConta & { level: number })[] => {
+    let flatList: (PlanoConta & { level: number })[] = [];
+    for (const account of accounts) {
+      flatList.push({ ...account, level });
+      if (account.subMenus) {
+        flatList = flatList.concat(flattenAccounts(account.subMenus, level + 1));
+      }
+    }
+    return flatList;
+  };
+
+  const contasSinteticasOptions = flattenAccounts(planosConta).filter(
+    (conta) => conta.type === "s"
+  );
+  
   const formatCodeInput = (value: string) => {
     // Remove tudo que não é dígito
-    const digits = value.replace(/\D/g, '');
+    const digits = value.replace(/\D/g, "");
 
     // Aplica a máscara X.XX.XX conforme o usuário digita
-    let formatted = '';
+    let formatted = "";
 
     if (digits.length > 0) {
       formatted = digits[0];
 
       if (digits.length > 1) {
-        formatted += '.' + digits.slice(1, 3);
+        formatted += "." + digits.slice(1, 3);
 
         if (digits.length > 3) {
-          formatted += '.' + digits.slice(3, 5);
+          formatted += "." + digits.slice(3, 5);
         }
       }
     }
@@ -132,12 +145,6 @@ export const PlanoContaForm = ({
                     className="w-full p-2 border rounded"
                     {...field}
                     required
-                    onChange={(e) => {
-                      field.onChange(e.target.value);
-                      if (e.target.value === "s") {
-                        form.setValue("father", null);
-                      }
-                    }}
                   >
                     <option value="a">Analítica</option>
                     <option value="s">Sintética</option>
@@ -176,24 +183,19 @@ export const PlanoContaForm = ({
                   <select
                     className="w-full p-2 border rounded"
                     {...field}
-                    disabled={form.watch("type") === "s"}
                     value={field.value || ""}
                     onChange={(e) => field.onChange(e.target.value || null)}
                   >
                     <option value="">Nenhuma</option>
-                    {contasSinteticas.map((conta: PlanoConta) => (
+                    {contasSinteticasOptions.map((conta) => (
                       <option key={conta.id} value={String(conta.id)}>
+                        {'\u00A0'.repeat(conta.level * 4)}
                         {conta.code} - {conta.name}
                       </option>
                     ))}
                   </select>
                 </FormControl>
                 <FormMessage />
-                {form.watch("type") === "s" && (
-                  <p className="text-sm text-muted-foreground">
-                    Contas sintéticas não podem ter conta pai.
-                  </p>
-                )}
               </FormItem>
             )}
           />
