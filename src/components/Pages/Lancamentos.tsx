@@ -186,6 +186,7 @@ export const LancamentosPage = () => {
 
     // Create a payload with all fields from lancamentoToPay, then override what's needed
     const payload = {
+      launch_type: lancamentoToPay.launch_type,
       user_id: lancamentoToPay.user?.id,
       supplier_id: lancamentoToPay.supplier?.id,
       account_id: lancamentoToPay.account?.id,
@@ -225,6 +226,7 @@ export const LancamentosPage = () => {
     setIsSubmitting(true);
 
     const payload = {
+      launch_type: values.launch_type,
       user_id: user?.id,
       supplier_id: values.supplier_id,
       account_id: values.account_id,
@@ -309,6 +311,7 @@ export const LancamentosPage = () => {
       value.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
     return {
+      launch_type: lancamento.launch_type as "+" | "-",
       supplier_id: lancamento.supplier?.id,
       account_id: lancamento.account?.id,
       document_id: lancamento.document?.id,
@@ -351,7 +354,8 @@ export const LancamentosPage = () => {
           ) : (
             <>
               <div className="border rounded-lg overflow-hidden">
-                <div className="grid grid-cols-11 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
+                <div className="grid grid-cols-12 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
+                  <div className="truncate-cell-lanc">Tipo</div>
                   <div className="truncate-cell-lanc">Fornecedor</div>
                   <div className="truncate-cell-lanc">Contábil</div>
                   <div className="truncate-cell-lanc">Pagamento</div>
@@ -367,8 +371,11 @@ export const LancamentosPage = () => {
                 {lancamentos.map((lancamento) => (
                   <div
                     key={lancamento.id}
-                    className="grid grid-cols-11 p-4 border-t items-center text-sm"
+                    className="grid grid-cols-12 p-4 border-t items-center text-sm"
                   >
+                    <div className="truncate-cell-lanc">
+                      {lancamento.launch_type === "+" ? "➕" : "➖"}
+                    </div>
                     <div className="truncate-cell-lanc">
                       {lancamento.supplier?.name}
                     </div>

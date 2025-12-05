@@ -38,6 +38,28 @@ import { TipoDocumento } from "@/types/TipoDocumentos";
 import { PlanoConta } from "@/types/PlanoContas";
 import { FormaPagamento } from "@/types/FormaPagamento";
 
+const parseCurrencyToFloat = (value: string | undefined) => {
+  if (!value) return 0;
+  // Check if the string contains a comma, which indicates pt-BR format.
+  if (value.includes(",")) {
+    // It's in "1.500,39" format. Remove dots, replace comma with dot.
+    return parseFloat(value.replace(/\./g, "").replace(",", "."));
+  }
+  // Otherwise, assume it's in "1500.39" format or a plain number.
+  return parseFloat(value);
+};
+
+const formatCurrency = (value: string | undefined) => {
+  if (!value) return "0,00";
+  // First, parse it to a number to handle both '1500.39' and '1.500,39'
+  const numericValue = parseCurrencyToFloat(value);
+  // Then, format it to the Brazilian standard.
+  return numericValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 export const LancamentoForm = ({
   onSubmit,
   defaultValues,
@@ -57,17 +79,25 @@ export const LancamentoForm = ({
 
   const form = useForm<LancamentoFormValues>({
     resolver: zodResolver(lancamentoSchema),
-    defaultValues: defaultValues || {
-      number: "",
-      situation: "0",
-      installment: 1,
-      dueDate: "",
-      value: "0,00",
-      fine: "0,00",
-      discount: "0,00",
-      amount_paid: "0,00",
-      observation: "",
-    },
+    defaultValues: defaultValues
+      ? {
+          ...defaultValues,
+          value: formatCurrency(defaultValues.value),
+          fine: formatCurrency(defaultValues.fine),
+          discount: formatCurrency(defaultValues.discount),
+        }
+      : {
+          launch_type: "-",
+          number: "",
+          situation: "0",
+          installment: 1,
+          dueDate: "",
+          value: "0,00",
+          fine: "0,00",
+          discount: "0,00",
+          amount_paid: "0,00",
+          observation: "",
+        },
   });
 
   useEffect(() => {
@@ -106,49 +136,60 @@ export const LancamentoForm = ({
     const discount = parseCurrencyToFloat(form.getValues("discount"));
 
     const total = value + fine - discount;
-    const formattedTotal = formatDefaultValue(total);
+    const formattedTotal = total.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
     form.setValue("amount_paid", formattedTotal);
   }, [form, form.watch("value"), form.watch("fine"), form.watch("discount")]);
-
-  const formatCurrency = (value: string) => {
-    if (!value) return "0,00";
-    let onlyNumbers = value.replace(/\D/g, "");
-    onlyNumbers = onlyNumbers.replace(/^0+/, "");
-    if (onlyNumbers === "") return "0,00";
-    onlyNumbers = onlyNumbers.padStart(3, "0");
-    const integerPart = onlyNumbers.slice(0, -2);
-    const decimalPart = onlyNumbers.slice(-2);
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return `${formattedInteger},${decimalPart}`;
-  };
 
   const handleCurrencyChange = (
     field: { onChange: (value: string) => void },
     value: string
   ) => {
-    const formattedValue = formatCurrency(value);
-    field.onChange(formattedValue);
-  };
-
-  const parseCurrencyToFloat = (value: string | undefined) => {
-    if (!value) return 0;
-    return parseFloat(value.replace(/\./g, "").replace(",", "."));
-  };
-
-  const formatDefaultValue = (value: number | undefined) => {
-    return value
-      ? value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-      : "0,00";
+    if (!value) {
+      field.onChange("0,00");
+      return;
+    }
+    let onlyNumbers = value.replace(/\D/g, "");
+    onlyNumbers = onlyNumbers.replace(/^0+/, "");
+    if (onlyNumbers === "") {
+      field.onChange("0,00");
+      return;
+    }
+    onlyNumbers = onlyNumbers.padStart(3, "0");
+    const integerPart = onlyNumbers.slice(0, -2);
+    const decimalPart = onlyNumbers.slice(-2);
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    field.onChange(`${formattedInteger},${decimalPart}`);
   };
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <FormField
+            control={form.control}
+            name="launch_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tipo de Lançamento *</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o tipo" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    <SelectItem value="+">Recebimento (+)</SelectItem>
+                    <SelectItem value="-">Pagamento (-)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="supplier_id"

@@ -20,11 +20,16 @@ const currencyString = (fieldName: string) =>
     });
 
 export const lancamentoSchema = z.object({
+  launch_type: z.enum(["+", "-"], {
+    required_error: "Tipo de lançamento é obrigatório",
+  }),
   supplier_id: z.number({ required_error: "Fornecedor é obrigatório" }),
   account_id: z.number({ required_error: "Tipo de conta é obrigatório" }),
   document_id: z.number({ required_error: "Tipo de documento é obrigatório" }),
   plan_account_id: z.number({ required_error: "Plano de conta é obrigatório" }),
-  payment_method_id: z.number({ required_error: "Forma de pagamento é obrigatória" }),
+  payment_method_id: z.number({
+    required_error: "Forma de pagamento é obrigatória",
+  }),
   number: requiredString("Número"),
   situation: z.enum(["0", "1"], { required_error: "Situação é obrigatória" }),
   installment: z.number(),
