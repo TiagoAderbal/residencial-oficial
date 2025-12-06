@@ -30,6 +30,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Fornecedor } from "@/types/Fornecedor";
@@ -40,20 +42,15 @@ import { FormaPagamento } from "@/types/FormaPagamento";
 
 const parseCurrencyToFloat = (value: string | undefined) => {
   if (!value) return 0;
-  // Check if the string contains a comma, which indicates pt-BR format.
   if (value.includes(",")) {
-    // It's in "1.500,39" format. Remove dots, replace comma with dot.
     return parseFloat(value.replace(/\./g, "").replace(",", "."));
   }
-  // Otherwise, assume it's in "1500.39" format or a plain number.
   return parseFloat(value);
 };
 
 const formatCurrency = (value: string | undefined) => {
   if (!value) return "0,00";
-  // First, parse it to a number to handle both '1500.39' and '1.500,39'
   const numericValue = parseCurrencyToFloat(value);
-  // Then, format it to the Brazilian standard.
   return numericValue.toLocaleString("pt-BR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -163,6 +160,26 @@ export const LancamentoForm = ({
     const decimalPart = onlyNumbers.slice(-2);
     const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     field.onChange(`${formattedInteger},${decimalPart}`);
+  };
+
+  const renderPlanoContasItems = (
+    contas: PlanoConta[],
+    level = 0
+  ): JSX.Element[] => {
+    return contas.flatMap((conta) => {
+      const items = [
+        <SelectItem
+          key={conta.id}
+          value={conta.id.toString()}
+          style={{ paddingLeft: `${1 + level * 1.5}rem` }}
+          className={level === 0 ? "font-semibold" : ""}
+        >
+          {conta.name} ({conta.code})
+        </SelectItem>,
+      ];
+
+      return items.concat(conta.subMenus ? renderPlanoContasItems(conta.subMenus, level + 1) : []);
+    });
   };
 
   return (
@@ -298,28 +315,7 @@ export const LancamentoForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {planoContas.map((group) => (
-                      <div key={group.id}>
-                        <SelectItem
-                          value={group.id.toString()}
-                          disabled={group.type !== "a"}
-                          className="font-semibold text-gray-500"
-                        >
-                          {group.name} ({group.code})
-                        </SelectItem>
-
-                        {group.subMenus?.map((sub: PlanoConta) => (
-                          <SelectItem
-                            key={sub.id}
-                            value={sub.id.toString()}
-                            disabled={sub.type !== "a"}
-                            className="ml-4"
-                          >
-                            {sub.name} ({sub.code})
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
+                    {renderPlanoContasItems(planoContas)}
                   </SelectContent>
                 </Select>
                 <FormMessage />
