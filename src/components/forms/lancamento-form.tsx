@@ -8,6 +8,8 @@ import {
   getTipoDocumentos,
   getPlanoDeContas,
   getFormaPagamentos,
+  getPacientes,
+  getTipoLancamentos,
 } from "@/lib/requests";
 import {
   Form,
@@ -39,6 +41,12 @@ import { TipoConta } from "@/types/TipoContas";
 import { TipoDocumento } from "@/types/TipoDocumentos";
 import { PlanoConta } from "@/types/PlanoContas";
 import { FormaPagamento } from "@/types/FormaPagamento";
+import { Paciente } from "@/types/Pacientes";
+
+interface TipoLancamento {
+  id: number;
+  name: string;
+}
 
 const parseCurrencyToFloat = (value: string | undefined) => {
   if (!value) return 0;
@@ -73,18 +81,28 @@ export const LancamentoForm = ({
   const [tipoDocumentos, setTipoDocumentos] = useState<TipoDocumento[]>([]);
   const [planoContas, setPlanoContas] = useState<PlanoConta[]>([]);
   const [formaPagamentos, setFormaPagamentos] = useState<FormaPagamento[]>([]);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [tipoLancamentos, setTipoLancamentos] = useState<TipoLancamento[]>(
+    []
+  );
+
+  const getInitialFormValues = (values?: Partial<LancamentoFormValues>) => {
+    if (!values) return {};
+    const launch_type = values.supplier_id ? 1 : 2;
+    return { ...values, launch_type };
+  };
 
   const form = useForm<LancamentoFormValues>({
     resolver: zodResolver(lancamentoSchema),
     defaultValues: defaultValues
       ? {
-          ...defaultValues,
+          ...getInitialFormValues(defaultValues),
           value: formatCurrency(defaultValues.value),
           fine: formatCurrency(defaultValues.fine),
           discount: formatCurrency(defaultValues.discount),
         }
       : {
-          launch_type: "-",
+          launch_type: 1,
           number: "",
           situation: "0",
           installment: 1,
@@ -106,12 +124,16 @@ export const LancamentoForm = ({
           { data: tipoDocumentosData },
           { data: planoContasData },
           { data: formaPagamentosData },
+          { data: pacientesData },
+          { data: tipoLancamentosData },
         ] = await Promise.all([
           getFornecedores(),
           getTipoContas(),
           getTipoDocumentos(),
           getPlanoDeContas(),
           getFormaPagamentos(),
+          getPacientes(),
+          getTipoLancamentos(),
         ]);
 
         setFornecedores(fornecedoresData?.results || []);
@@ -119,6 +141,8 @@ export const LancamentoForm = ({
         setTipoDocumentos(tipoDocumentosData?.results || []);
         setPlanoContas(planoContasData?.results || []);
         setFormaPagamentos(formaPagamentosData?.results || []);
+        setPacientes(pacientesData?.results || []);
+        setTipoLancamentos(tipoLancamentosData?.results || []);
       } catch (error) {
         console.error("Erro ao carregar dados para formulário:", error);
       }
@@ -126,6 +150,8 @@ export const LancamentoForm = ({
 
     loadData();
   }, []);
+
+  const launchType = form.watch("launch_type");
 
   useEffect(() => {
     const value = parseCurrencyToFloat(form.getValues("value"));
@@ -178,13 +204,27 @@ export const LancamentoForm = ({
         </SelectItem>,
       ];
 
-      return items.concat(conta.subMenus ? renderPlanoContasItems(conta.subMenus, level + 1) : []);
+      return items.concat(
+        conta.subMenus ? renderPlanoContasItems(conta.subMenus, level + 1) : []
+      );
     });
+  };
+
+  const handleFormSubmit = (values: LancamentoFormValues) => {
+    const { patient_id, ...rest } = values;
+
+    const submissionData: any = { ...rest };
+
+    if (patient_id !== undefined) {
+      submissionData.patient = patient_id;
+    }
+
+    onSubmit(submissionData as LancamentoFormValues);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
@@ -192,43 +232,19 @@ export const LancamentoForm = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Tipo de Lançamento *</FormLabel>
-                <Select onValueChange={field.onChange} value={field.value}>
+                <Select
+                  onValueChange={(value) => field.onChange(parseInt(value))}
+                  value={field.value?.toString()}
+                >
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="+">Recebimento (+)</SelectItem>
-                    <SelectItem value="-">Pagamento (-)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="supplier_id"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Fornecedor *</FormLabel>
-                <Select
-                  onValueChange={(value) => field.onChange(parseInt(value))}
-                  value={field.value?.toString() ?? ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {fornecedores.map((fornecedor) => (
-                      <SelectItem
-                        key={fornecedor.id}
-                        value={fornecedor.id.toString()}
-                      >
-                        {fornecedor.name}
+                    {tipoLancamentos.map((tipo) => (
+                      <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                        {tipo.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -237,6 +253,67 @@ export const LancamentoForm = ({
               </FormItem>
             )}
           />
+
+          {launchType === 2 ? (
+            <FormField
+              control={form.control}
+              name="patient_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Paciente *</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um paciente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {pacientes.map((paciente) => (
+                        <SelectItem
+                          key={paciente.id}
+                          value={paciente.id.toString()}
+                        >
+                          {paciente.nome_completo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <FormField
+              control={form.control}
+              name="supplier_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fornecedor *</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um fornecedor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {fornecedores.map((fornecedor) => (
+                        <SelectItem key={fornecedor.id} value={fornecedor.id.toString()}>
+                          {fornecedor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}

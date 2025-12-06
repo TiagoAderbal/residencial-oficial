@@ -21,6 +21,10 @@ export interface Lancamento {
     phone: string;
     mobile: string;
   };
+  patient: {
+    id: number;
+    nome_completo: string;
+  };
   account: {
     id: number;
     name: string;

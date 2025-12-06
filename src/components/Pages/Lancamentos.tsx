@@ -16,6 +16,7 @@ import {
   createLancamento,
   updateLancamento,
   deleteLancamento,
+  getPacientes,
 } from "@/lib/requests";
 import { Button } from "@/components/ui/button";
 import {
@@ -56,6 +57,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAuthStore } from "@/store/authStore";
 import { Lancamento } from "@/types/Lancamentos";
+import { Paciente } from "@/types/Pacientes";
 import { LancamentoFormValues } from "@/lib/schemas/lancamentoSchema";
 import { Calendar } from "@/components/ui/calendar";
 
@@ -91,21 +93,31 @@ export const LancamentosPage = () => {
   const fetchLancamentos = async (page = 1) => {
     try {
       setIsLoading(true);
-      const { data: response } = await getLancamentos(page);
+      const [{ data: lancamentosResponse }, { data: pacientesResponse }] =
+        await Promise.all([getLancamentos(page), getPacientes()]);
 
-      const sanitizedResults =
-        response?.results.map((item) => ({
-          ...item,
-          observation: item.observation ?? undefined, // converte null para undefined
-        })) || [];
+      const pacientesMap = new Map<number, Paciente>();
+      pacientesResponse?.results.forEach((paciente: Paciente) => {
+        pacientesMap.set(paciente.id, paciente);
+      });
 
-      setLancamentos(sanitizedResults);
+      const enrichedLancamentos =
+        lancamentosResponse?.results.map((lancamento: any) => {
+          const enriched = { ...lancamento };
+          if (lancamento.patient) {
+            enriched.patient = pacientesMap.get(lancamento.patient);
+          }
+          enriched.observation = lancamento.observation ?? undefined;
+          return enriched;
+        }) || [];
 
-      const totalCount = response?.count || 0;
+      setLancamentos(enrichedLancamentos);
+
+      const totalCount = lancamentosResponse?.count || 0;
       setPagination({
         count: totalCount,
         currentPage: page,
-        totalPages: Math.ceil(totalCount / 10), // 10 itens por página
+        totalPages: Math.ceil(totalCount / 10),
       });
     } catch (error) {
       toast.error("Erro ao carregar lançamentos");
@@ -123,13 +135,11 @@ export const LancamentosPage = () => {
     const currentPage = pagination.currentPage;
     const pageNumbers = [];
 
-    // Sempre mostra até 5 números de página
     if (totalPages <= 5) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
     } else {
-      // Mostra páginas próximas à atual
       const startPage = Math.max(1, currentPage - 2);
       const endPage = Math.min(totalPages, currentPage + 2);
 
@@ -184,7 +194,6 @@ export const LancamentosPage = () => {
       ? `${lancamentoToPay.observation}\n${observationText}`
       : observationText;
 
-    // Create a payload with all fields from lancamentoToPay, then override what's needed
     const payload = {
       launch_type: lancamentoToPay.launch_type,
       user_id: lancamentoToPay.user?.id,
@@ -225,10 +234,11 @@ export const LancamentosPage = () => {
   const handleSubmit = async (values: LancamentoFormValues) => {
     setIsSubmitting(true);
 
-    const payload = {
+    const payload: any = {
       launch_type: values.launch_type,
       user_id: user?.id,
       supplier_id: values.supplier_id,
+      patient: (values as any).patient,
       account_id: values.account_id,
       document_id: values.document_id,
       plan_account_id: values.plan_account_id,
@@ -251,10 +261,8 @@ export const LancamentosPage = () => {
     setIsSubmitting(false);
 
     if (response.error) {
-      // Se a API retornou um erro (4xx, 5xx), ele será exibido aqui
       toast.error(response.error.message);
     } else {
-      // Se deu tudo certo (2xx)
       toast.success(
         currentLancamento?.id
           ? "Lançamento atualizado com sucesso!"
@@ -278,7 +286,6 @@ export const LancamentosPage = () => {
       toast.success("Lançamento excluído com sucesso!");
       setOpenDeleteDialog(false);
 
-      // Verifica se estamos na última página com apenas 1 item
       if (lancamentos.length === 1 && pagination.currentPage > 1) {
         fetchLancamentos(pagination.currentPage - 1);
       } else {
@@ -311,8 +318,9 @@ export const LancamentosPage = () => {
       value.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
 
     return {
-      launch_type: lancamento.launch_type as "+" | "-",
+      launch_type: parseInt(lancamento.launch_type, 10),
       supplier_id: lancamento.supplier?.id,
+      patient_id: lancamento.patient?.id,
       account_id: lancamento.account?.id,
       document_id: lancamento.document?.id,
       plan_account_id: lancamento.plan_account?.id,
@@ -354,57 +362,53 @@ export const LancamentosPage = () => {
           ) : (
             <>
               <div className="border rounded-lg overflow-hidden">
-                <div className="grid grid-cols-12 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-slate-800 dark:text-slate-200">
-                  <div className="truncate-cell-lanc">Tipo</div>
-                  <div className="truncate-cell-lanc">Fornecedor</div>
-                  <div className="truncate-cell-lanc">Contábil</div>
-                  <div className="truncate-cell-lanc">Pagamento</div>
-                  <div className="truncate-cell-lanc">Situação</div>
-                  <div className="truncate-cell-lanc">Qtd Parcelas</div>
-                  <div className="truncate-cell-lanc">Vencimento</div>
-                  <div className="truncate-cell-lanc">Valor</div>
-                  <div className="truncate-cell-lanc">Multa/Juros</div>
-                  <div className="truncate-cell-lanc">Desconto</div>
-                  <div className="truncate-cell-lanc">Valor Pago</div>
-                  <div className="truncate-cell-lanc">Ações</div>
+                <div className="grid grid-cols-12 bg-slate-100 dark:bg-slate-800 p-4 font-medium text-sm dark:text-slate-200">
+                  <div className="truncate-cell-lanc col-span-1">Tipo</div>
+                  <div className="truncate-cell-lanc col-span-2">Fornecedor/Paciente</div>
+                  <div className="truncate-cell-lanc col-span-1">Forma Pgto</div>
+                  <div className="truncate-cell-lanc col-span-1">Situação</div>
+                  <div className="truncate-cell-lanc col-span-1">Parcelas</div>
+                  <div className="truncate-cell-lanc col-span-1">Vencimento</div>
+                  <div className="truncate-cell-lanc col-span-1">Valor</div>
+                  <div className="truncate-cell-lanc col-span-1">Multa/Juros</div>
+                  <div className="truncate-cell-lanc col-span-1">Desconto</div>
+                  <div className="truncate-cell-lanc col-span-1">Total</div>
+                  <div className="truncate-cell-lanc col-span-1">Ações</div>
                 </div>
                 {lancamentos.map((lancamento) => (
                   <div
                     key={lancamento.id}
                     className="grid grid-cols-12 p-4 border-t items-center text-sm"
                   >
-                    <div className="truncate-cell-lanc">
-                      {lancamento.launch_type === "+" ? "➕" : "➖"}
+                    <div className="truncate-cell-lanc col-span-1">
+                      {lancamento.supplier ? "➖" : "➕"}
                     </div>
-                    <div className="truncate-cell-lanc">
-                      {lancamento.supplier?.name}
+                    <div className="truncate-cell-lanc col-span-2">
+                      {lancamento.supplier?.name || lancamento.patient?.nome_completo}
                     </div>
-                    <div className="truncate-cell-lanc">
-                      {lancamento.plan_account?.name}
-                    </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {lancamento.payment_method?.name}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {lancamento.situation === "0" ? "Pendente" : "Pago"}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {lancamento.installment}{" "}
                       {lancamento.installment === 1 ? "Parcela" : "Parcelas"}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {formatDate(lancamento.dueDate)}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {formatCurrency(lancamento.value)}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {formatCurrency(lancamento.fine)}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {formatCurrency(lancamento.discount)}
                     </div>
-                    <div className="truncate-cell-lanc">
+                    <div className="truncate-cell-lanc col-span-1">
                       {formatCurrency(lancamento.amount_paid)}
                     </div>
                     <DropdownMenu>
@@ -454,7 +458,6 @@ export const LancamentosPage = () => {
                 ))}
               </div>
 
-              {/* Paginação simplificada */}
               <div className="flex items-center justify-between mt-4">
                 <div className="text-sm text-muted-foreground">
                   Total: {pagination.count} lançamentos • Página{" "}
@@ -572,9 +575,9 @@ export const LancamentosPage = () => {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">
-                        Fornecedor
+                        {lancamentoToView.supplier ? 'Fornecedor' : 'Paciente'}
                       </label>
-                      <Input value={lancamentoToView.supplier?.name} readOnly />
+                      <Input value={lancamentoToView.supplier?.name || lancamentoToView.patient?.nome_completo} readOnly />
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1 text-muted-foreground">
