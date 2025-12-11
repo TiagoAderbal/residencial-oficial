@@ -1,5 +1,6 @@
 export interface Lancamento {
   id?: number;
+  launch_type: string;
   user: {
     id: number;
     username: string;
@@ -19,6 +20,10 @@ export interface Lancamento {
     country: string;
     phone: string;
     mobile: string;
+  };
+  patient: {
+    id: number;
+    nome_completo: string;
   };
   account: {
     id: number;
@@ -61,6 +66,7 @@ export type APIGetLancamentos = {
 
 
 export type CreateLancamentoPayload = {
+  launch_type?: string;
   user_id?: number;
   supplier_id?: number;
   account_id?: number;

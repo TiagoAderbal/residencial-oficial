@@ -8,6 +8,8 @@ import {
   getTipoDocumentos,
   getPlanoDeContas,
   getFormaPagamentos,
+  getPacientes,
+  getTipoLancamentos,
 } from "@/lib/requests";
 import {
   Form,
@@ -30,6 +32,8 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  SelectGroup,
+  SelectLabel,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Fornecedor } from "@/types/Fornecedor";
@@ -37,6 +41,29 @@ import { TipoConta } from "@/types/TipoContas";
 import { TipoDocumento } from "@/types/TipoDocumentos";
 import { PlanoConta } from "@/types/PlanoContas";
 import { FormaPagamento } from "@/types/FormaPagamento";
+import { Paciente } from "@/types/Pacientes";
+
+interface TipoLancamento {
+  id: number;
+  name: string;
+}
+
+const parseCurrencyToFloat = (value: string | undefined) => {
+  if (!value) return 0;
+  if (value.includes(",")) {
+    return parseFloat(value.replace(/\./g, "").replace(",", "."));
+  }
+  return parseFloat(value);
+};
+
+const formatCurrency = (value: string | undefined) => {
+  if (!value) return "0,00";
+  const numericValue = parseCurrencyToFloat(value);
+  return numericValue.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 export const LancamentoForm = ({
   onSubmit,
@@ -54,20 +81,38 @@ export const LancamentoForm = ({
   const [tipoDocumentos, setTipoDocumentos] = useState<TipoDocumento[]>([]);
   const [planoContas, setPlanoContas] = useState<PlanoConta[]>([]);
   const [formaPagamentos, setFormaPagamentos] = useState<FormaPagamento[]>([]);
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [tipoLancamentos, setTipoLancamentos] = useState<TipoLancamento[]>(
+    []
+  );
+
+  const getInitialFormValues = (values?: Partial<LancamentoFormValues>) => {
+    if (!values) return {};
+    const launch_type = values.supplier_id ? 1 : 2;
+    return { ...values, launch_type };
+  };
 
   const form = useForm<LancamentoFormValues>({
     resolver: zodResolver(lancamentoSchema),
-    defaultValues: defaultValues || {
-      number: "",
-      situation: "0",
-      installment: 1,
-      dueDate: "",
-      value: "0,00",
-      fine: "0,00",
-      discount: "0,00",
-      amount_paid: "0,00",
-      observation: "",
-    },
+    defaultValues: defaultValues
+      ? {
+          ...getInitialFormValues(defaultValues),
+          value: formatCurrency(defaultValues.value),
+          fine: formatCurrency(defaultValues.fine),
+          discount: formatCurrency(defaultValues.discount),
+        }
+      : {
+          launch_type: 1,
+          number: "",
+          situation: "0",
+          installment: 1,
+          dueDate: "",
+          value: "0,00",
+          fine: "0,00",
+          discount: "0,00",
+          amount_paid: "0,00",
+          observation: "",
+        },
   });
 
   useEffect(() => {
@@ -79,12 +124,16 @@ export const LancamentoForm = ({
           { data: tipoDocumentosData },
           { data: planoContasData },
           { data: formaPagamentosData },
+          { data: pacientesData },
+          { data: tipoLancamentosData },
         ] = await Promise.all([
           getFornecedores(),
           getTipoContas(),
           getTipoDocumentos(),
           getPlanoDeContas(),
           getFormaPagamentos(),
+          getPacientes(),
+          getTipoLancamentos(),
         ]);
 
         setFornecedores(fornecedoresData?.results || []);
@@ -92,6 +141,8 @@ export const LancamentoForm = ({
         setTipoDocumentos(tipoDocumentosData?.results || []);
         setPlanoContas(planoContasData?.results || []);
         setFormaPagamentos(formaPagamentosData?.results || []);
+        setPacientes(pacientesData?.results || []);
+        setTipoLancamentos(tipoLancamentosData?.results || []);
       } catch (error) {
         console.error("Erro ao carregar dados para formulário:", error);
       }
@@ -100,77 +151,100 @@ export const LancamentoForm = ({
     loadData();
   }, []);
 
+  const launchType = form.watch("launch_type");
+
   useEffect(() => {
     const value = parseCurrencyToFloat(form.getValues("value"));
     const fine = parseCurrencyToFloat(form.getValues("fine"));
     const discount = parseCurrencyToFloat(form.getValues("discount"));
 
     const total = value + fine - discount;
-    const formattedTotal = formatDefaultValue(total);
+    const formattedTotal = total.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
 
     form.setValue("amount_paid", formattedTotal);
   }, [form, form.watch("value"), form.watch("fine"), form.watch("discount")]);
-
-  const formatCurrency = (value: string) => {
-    if (!value) return "0,00";
-    let onlyNumbers = value.replace(/\D/g, "");
-    onlyNumbers = onlyNumbers.replace(/^0+/, "");
-    if (onlyNumbers === "") return "0,00";
-    onlyNumbers = onlyNumbers.padStart(3, "0");
-    const integerPart = onlyNumbers.slice(0, -2);
-    const decimalPart = onlyNumbers.slice(-2);
-    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-    return `${formattedInteger},${decimalPart}`;
-  };
 
   const handleCurrencyChange = (
     field: { onChange: (value: string) => void },
     value: string
   ) => {
-    const formattedValue = formatCurrency(value);
-    field.onChange(formattedValue);
+    if (!value) {
+      field.onChange("0,00");
+      return;
+    }
+    let onlyNumbers = value.replace(/\D/g, "");
+    onlyNumbers = onlyNumbers.replace(/^0+/, "");
+    if (onlyNumbers === "") {
+      field.onChange("0,00");
+      return;
+    }
+    onlyNumbers = onlyNumbers.padStart(3, "0");
+    const integerPart = onlyNumbers.slice(0, -2);
+    const decimalPart = onlyNumbers.slice(-2);
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    field.onChange(`${formattedInteger},${decimalPart}`);
   };
 
-  const parseCurrencyToFloat = (value: string | undefined) => {
-    if (!value) return 0;
-    return parseFloat(value.replace(/\./g, "").replace(",", "."));
+  const renderPlanoContasItems = (
+    contas: PlanoConta[],
+    level = 0
+  ): JSX.Element[] => {
+    return contas.flatMap((conta) => {
+      const items = [
+        <SelectItem
+          key={conta.id}
+          value={conta.id.toString()}
+          style={{ paddingLeft: `${1 + level * 1.5}rem` }}
+          className={level === 0 ? "font-semibold" : ""}
+        >
+          {conta.name} ({conta.code})
+        </SelectItem>,
+      ];
+
+      return items.concat(
+        conta.subMenus ? renderPlanoContasItems(conta.subMenus, level + 1) : []
+      );
+    });
   };
 
-  const formatDefaultValue = (value: number | undefined) => {
-    return value
-      ? value.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })
-      : "0,00";
+  const handleFormSubmit = (values: LancamentoFormValues) => {
+    const { patient_id, ...rest } = values;
+
+    const submissionData: any = { ...rest };
+
+    if (patient_id !== undefined) {
+      submissionData.patient = patient_id;
+    }
+
+    onSubmit(submissionData as LancamentoFormValues);
   };
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
-            name="supplier_id"
+            name="launch_type"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Fornecedor *</FormLabel>
+                <FormLabel>Tipo de Lançamento *</FormLabel>
                 <Select
                   onValueChange={(value) => field.onChange(parseInt(value))}
-                  value={field.value?.toString() ?? ""}
+                  value={field.value?.toString()}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione um fornecedor" />
+                      <SelectValue placeholder="Selecione o tipo" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {fornecedores.map((fornecedor) => (
-                      <SelectItem
-                        key={fornecedor.id}
-                        value={fornecedor.id.toString()}
-                      >
-                        {fornecedor.name}
+                    {tipoLancamentos.map((tipo) => (
+                      <SelectItem key={tipo.id} value={tipo.id.toString()}>
+                        {tipo.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -179,6 +253,67 @@ export const LancamentoForm = ({
               </FormItem>
             )}
           />
+
+          {launchType === 2 ? (
+            <FormField
+              control={form.control}
+              name="patient_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Paciente *</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um paciente" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {pacientes.map((paciente) => (
+                        <SelectItem
+                          key={paciente.id}
+                          value={paciente.id.toString()}
+                        >
+                          {paciente.nome_completo}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ) : (
+            <FormField
+              control={form.control}
+              name="supplier_id"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Fornecedor *</FormLabel>
+                  <Select
+                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    value={field.value?.toString() ?? ""}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um fornecedor" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {fornecedores.map((fornecedor) => (
+                        <SelectItem key={fornecedor.id} value={fornecedor.id.toString()}>
+                          {fornecedor.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
 
           <FormField
             control={form.control}
@@ -257,28 +392,7 @@ export const LancamentoForm = ({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {planoContas.map((group) => (
-                      <div key={group.id}>
-                        <SelectItem
-                          value={group.id.toString()}
-                          disabled={group.type !== "a"}
-                          className="font-semibold text-gray-500"
-                        >
-                          {group.name} ({group.code})
-                        </SelectItem>
-
-                        {group.subMenus?.map((sub: PlanoConta) => (
-                          <SelectItem
-                            key={sub.id}
-                            value={sub.id.toString()}
-                            disabled={sub.type !== "a"}
-                            className="ml-4"
-                          >
-                            {sub.name} ({sub.code})
-                          </SelectItem>
-                        ))}
-                      </div>
-                    ))}
+                    {renderPlanoContasItems(planoContas)}
                   </SelectContent>
                 </Select>
                 <FormMessage />

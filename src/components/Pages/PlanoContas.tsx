@@ -1,13 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
-import { Loader2, Plus, Edit, Trash2, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import {
+  Loader2,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import {
   getPlanoDeContas,
   createPlanoConta,
   updatePlanoConta,
-  deletePlanoConta
+  deletePlanoConta,
 } from "@/lib/requests";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +52,7 @@ type PlanoConta = {
   code: string;
   name: string;
   description: string;
-  type: 'a' | 's';
+  type: "a" | "s";
   father: number | null;
   subMenus?: PlanoConta[];
 };
@@ -53,27 +61,45 @@ export const PlanoDeContasPage = () => {
   const [planosConta, setPlanosConta] = useState<PlanoConta[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [openDrawer, setOpenDrawer] = useState(false);
-  const [currentPlanoConta, setCurrentPlanoConta] = useState<PlanoConta | null>(null);
+  const [currentPlanoConta, setCurrentPlanoConta] =
+    useState<PlanoConta | null>(null);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
-  const [planoContaToDelete, setPlanoContaToDelete] = useState<number | null>(null);
+  const [planoContaToDelete, setPlanoContaToDelete] = useState<number | null>(
+    null
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [openViewDrawer, setOpenViewDrawer] = useState(false);
-  const [planoContaToView, setPlanoContaToView] = useState<PlanoConta | null>(null);
+  const [planoContaToView, setPlanoContaToView] =
+    useState<PlanoConta | null>(null);
   const [expanded, setExpanded] = useState<number[]>([]);
+
+  const flatPlanosConta = useMemo(() => {
+    const flatten = (accounts: PlanoConta[]): PlanoConta[] => {
+      let list: PlanoConta[] = [];
+      for (const account of accounts) {
+        list.push(account);
+        if (account.subMenus) {
+          list = list.concat(flatten(account.subMenus));
+        }
+      }
+      return list;
+    };
+    return flatten(planosConta);
+  }, [planosConta]);
+
+  const fetchPlanosConta = async () => {
+    try {
+      const { data: response } = await getPlanoDeContas();
+      setPlanosConta(response?.results || []);
+    } catch (error) {
+      toast.error("Erro ao carregar planos de conta");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Fetch planos de conta
   useEffect(() => {
-    const fetchPlanosConta = async () => {
-      try {
-        const { data: response } = await getPlanoDeContas();
-        setPlanosConta(response?.results || []);
-      } catch (error) {
-        toast.error("Erro ao carregar planos de conta");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchPlanosConta();
   }, []);
 
@@ -89,31 +115,27 @@ export const PlanoDeContasPage = () => {
 
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
-    try {
-      // Garante que o código está no formato correto
-      const formattedValues = {
-        ...values,
-        father: values.father ? Number(values.father) : null
-      };
+    const formattedValues = {
+      ...values,
+      father: values.father ? Number(values.father) : null,
+    };
 
+    try {
       if (currentPlanoConta) {
-        const response = await updatePlanoConta(currentPlanoConta.id, formattedValues);
-        if (response.data) {
-          setPlanosConta(planosConta.map(p =>
-            p.id === currentPlanoConta.id ? { ...p, ...response.data } : p
-          ));
-          toast.success("Plano de conta atualizado com sucesso!");
-        }
+        await updatePlanoConta(currentPlanoConta.id, formattedValues);
+        toast.success("Plano de conta atualizado com sucesso!");
       } else {
-        const { data: response } = await createPlanoConta(formattedValues);
-        if (response) {
-          setPlanosConta([...planosConta, response]);
-          toast.success("Plano de conta cadastrado com sucesso!");
-        }
+        await createPlanoConta(formattedValues);
+        toast.success("Plano de conta cadastrado com sucesso!");
       }
       setOpenDrawer(false);
+      fetchPlanosConta(); // Refresh data
     } catch (error) {
-      toast.error(`Erro ao ${currentPlanoConta ? "atualizar" : "cadastrar"} plano de conta`);
+      toast.error(
+        `Erro ao ${
+          currentPlanoConta ? "atualizar" : "cadastrar"
+        } plano de conta`
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -129,35 +151,96 @@ export const PlanoDeContasPage = () => {
 
     try {
       await deletePlanoConta(planoContaToDelete);
-      setPlanosConta(planosConta.filter(p => p.id !== planoContaToDelete));
       toast.success("Plano de conta excluído com sucesso!");
       setOpenDeleteDialog(false);
+      fetchPlanosConta(); // Refresh data
     } catch (error) {
       toast.error("Erro ao excluir plano de conta");
     }
   };
 
   const toggleExpand = (id: number) => {
-    setExpanded(prev =>
-      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    setExpanded((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
     );
   };
 
   const formatCode = (code: string) => {
-    if (!code) return '';
-
-    // Se já estiver no formato correto, retorna como está
+    if (!code) return "";
     if (code.match(/^\d\.\d{2}\.\d{2}$/)) return code;
-
-    // Remove todos os pontos existentes para evitar duplicação
-    const cleanCode = code.replace(/\./g, '');
-
-    // Completa com zeros à direita se necessário
-    const paddedCode = cleanCode.padEnd(5, '0').slice(0, 5);
-
-    // Insere os pontos nas posições corretas
-    return `${paddedCode.charAt(0)}.${paddedCode.slice(1, 3)}.${paddedCode.slice(3, 5)}`;
+    const cleanCode = code.replace(/\./g, "");
+    const paddedCode = cleanCode.padEnd(5, "0").slice(0, 5);
+    return `${paddedCode.charAt(0)}.${paddedCode.slice(
+      1,
+      3
+    )}.${paddedCode.slice(3, 5)}`;
   };
+
+  const ContaRow = ({ conta, level }: { conta: PlanoConta; level: number }) => (
+    <>
+      <div
+        className={`grid grid-cols-5 p-4 border-t items-center text-sm ${
+          conta.type === "s"
+            ? "bg-slate-50 dark:bg-slate-800/50 font-medium"
+            : ""
+        }`}
+      >
+        <div
+          style={{ paddingLeft: `${level * 1.5}rem` }}
+          className="flex items-center"
+        >
+          {formatCode(conta.code)}
+        </div>
+        <div>{conta.name}</div>
+        <div>{conta.description}</div>
+        <div>{conta.type === "s" ? "Sintética" : "Analítica"}</div>
+        <div className="flex gap-2 justify-start">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleOpenView(conta)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => handleOpenEdit(conta)}
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="destructive"
+            size="icon"
+            onClick={() => {
+              setPlanoContaToDelete(conta.id);
+              setOpenDeleteDialog(true);
+            }}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+          {conta.subMenus && conta.subMenus.length > 0 && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => toggleExpand(conta.id)}
+            >
+              {expanded.includes(conta.id) ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-f" />
+              )}
+            </Button>
+          )}
+        </div>
+      </div>
+      {expanded.includes(conta.id) &&
+        conta.subMenus &&
+        conta.subMenus.map((subConta) => (
+          <ContaRow key={subConta.id} conta={subConta} level={level + 1} />
+        ))}
+    </>
+  );
 
   return (
     <main className="h-app p-6 overflow-auto">
@@ -191,91 +274,7 @@ export const PlanoDeContasPage = () => {
                 <div className="text-left">Ações</div>
               </div>
               {planosConta.map((conta) => (
-                <div key={conta.id} className="space-y-0">
-                  <div className={`grid grid-cols-5 p-4 border-t items-center text-sm ${conta.type === 's' ? 'bg-slate-100 dark:bg-slate-800 font-medium' : ''}`}>
-                    <div className="flex items-center">
-                      {formatCode(conta.code)}
-                    </div>
-                    <div>{conta.name}</div>
-                    <div>{conta.description}</div>
-                    <div>{conta.type === 's' ? 'Sintética' : 'Analítica'}</div>
-                    <div className="flex gap-2 justify-start">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenView(conta)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleOpenEdit(conta)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => {
-                          setPlanoContaToDelete(conta.id);
-                          setOpenDeleteDialog(true);
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                      {conta.subMenus && conta.subMenus.length > 0 && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => toggleExpand(conta.id)}
-                        >
-                          {expanded.includes(conta.id) ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  {expanded.includes(conta.id) && conta.subMenus && conta.subMenus.map((subConta) => (
-                    <div key={subConta.id} className="grid grid-cols-5 p-4 border-t items-center text-sm pl-8">
-                      <div className="flex items-center">
-                        {formatCode(subConta.code)}
-                      </div>
-                      <div>{subConta.name}</div>
-                      <div>{subConta.description}</div>
-                      <div>{subConta.type === 's' ? 'Sintética' : 'Analítica'}</div>
-                      <div className="flex gap-2 justify-start">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleOpenView(subConta)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleOpenEdit(subConta)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => {
-                            setPlanoContaToDelete(subConta.id);
-                            setOpenDeleteDialog(true);
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <ContaRow key={conta.id} conta={conta} level={0} />
               ))}
             </div>
           )}
@@ -296,36 +295,54 @@ export const PlanoDeContasPage = () => {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Código</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Código
+                    </label>
                     <Input value={formatCode(planoContaToView.code)} readOnly />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Nome</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Nome
+                    </label>
                     <Input value={planoContaToView.name} readOnly />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Descrição</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Descrição
+                    </label>
                     <Input value={planoContaToView.description} readOnly />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1">Tipo</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Tipo
+                    </label>
                     <Input
-                      value={planoContaToView.type === 's' ? 'Sintética' : 'Analítica'}
+                      value={
+                        planoContaToView.type === "s"
+                          ? "Sintética"
+                          : "Analítica"
+                      }
                       readOnly
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-1">Conta Pai</label>
+                    <label className="block text-sm font-medium mb-1">
+                      Conta Pai
+                    </label>
                     <Input
-                      value={planoContaToView.father ?
-                        planosConta.find(p => p.id === planoContaToView.father)?.name || 'N/A' :
-                        'Nenhuma'}
+                      value={
+                        planoContaToView.father
+                          ? flatPlanosConta.find(
+                              (p) => p.id === planoContaToView.father
+                            )?.name || "N/A"
+                          : "Nenhuma"
+                      }
                       readOnly
                     />
                   </div>
@@ -372,7 +389,8 @@ export const PlanoDeContasPage = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
             <AlertDialogDescription>
-              Tem certeza que deseja excluir esta conta? Esta ação não pode ser desfeita.
+              Tem certeza que deseja excluir esta conta? Esta ação não pode ser
+              desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
